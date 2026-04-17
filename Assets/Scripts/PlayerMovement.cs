@@ -62,7 +62,7 @@ public class PlayerMovement : MonoBehaviour
     {
         if (context.performed && coyoteTimeCounter > 0f)
         {
-            coyoteTimeCounter = -0f;
+            coyoteTimeCounter = 0f;
 
             vertPos = jumpForce;
 
