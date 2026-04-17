@@ -3,66 +3,105 @@ using UnityEngine.InputSystem;
 
 public class PlayerMovement : MonoBehaviour
 {
-    private InputAction moveAction;
-
-    private InputAction jumpAction;
-
-    private Rigidbody rb;
-
-
-    private Transform groundCheck;
-
-    private LayerMask groundMask;
-
-    public float groundDistance = 0.2f;
-
-    private bool isGrounded;
-
-
-    private float vertVelocity = 0;
-
     public float gravity = -9.81f;
+    public float jumpForce = 5f;
+    public float speed = 5f;
+    public float groundDisplacement = 0.1f;
+
+    private Vector2 moveAction;
+    private Rigidbody rb;
+    private float vertPos = 0;
+
+    [SerializeField] private Transform groundCheck;
+    [SerializeField] private LayerMask groundMask;
+    public float groundDistance = 0.5f;
+
+    private bool isGrounded = false;
+
+    private float coyoteTime = 0.2f;
+    private float coyoteTimeCounter; 
 
     private void Awake()
     {
-        moveAction = InputSystem.actions.FindAction("Move");
-        jumpAction = InputSystem.actions.FindAction("Jump");
-
         rb = GetComponent<Rigidbody>();
+        rb.useGravity = false;
     }
 
     private void Update()
     {
-        Move();
-        Jump();
         ApplyGravity();
+
+        Vector3 deltaDirection = new Vector3(moveAction.x * speed, vertPos, moveAction.y * speed);
+
+        rb.linearVelocity = deltaDirection;
+
+        //Vector3 v = rb.linearVelocity;
+        //v.y = vertPos;
+        //rb.linearVelocity = v;
+
+        Debug.Log(transform.position);
+        Debug.Log(vertPos);
+
+        if (IsGrounded())
+        {
+            coyoteTimeCounter = coyoteTime;
+        }
+        else
+        {
+            coyoteTimeCounter -= Time.deltaTime; 
+        }
+    }
+
+    public void Move(InputAction.CallbackContext context)
+    {
+        moveAction = context.ReadValue<Vector2>();
+        Debug.Log(moveAction + "Press");
+    }
+
+    public void Jump(InputAction.CallbackContext context)
+    {
+        if (context.performed && IsGrounded())
+        {
+            vertPos = jumpForce;
+            Debug.Log(moveAction + "Press");
+        }
     }
 
     private void ApplyGravity()
     {
-        isGrounded = Physics.CheckSphere(transform.position, groundDistance, 1);
+        if (IsGrounded() && vertPos < 0)
+        {
+            Debug.Log("Grounded" + vertPos);
+            vertPos = -2f;
+        }
+
+        else
+        {
+            vertPos += gravity * Time.deltaTime;
+            Debug.Log("Not Grounded!" + vertPos);
+        }
+    }
+
+    private bool IsGrounded()
+    {
+        isGrounded = Physics.Raycast(groundCheck.position, Vector3.down, groundDistance + groundDisplacement, groundMask);
 
         if (isGrounded)
         {
-            Debug.Log("Grounded");
-            gravity = 0 * Time.deltaTime;
+            return true;
         }
 
-        vertVelocity += gravity * Time.deltaTime;
-
-        transform.position = new Vector3(transform.position.x, vertVelocity , transform.position.y);
-
-        Debug.Log(transform.position);
+        else
+        {
+            return false;
+        }
     }
 
-    private void Move()
+
+    private void OnDrawGizmos()
     {
-
-    }
-
-    private void Jump()
-    {
-
+        // Gizmos.DrawSphere(groundCheck.position, groundDistance);
+        Gizmos.DrawRay(new Vector3(groundCheck.position.x,groundCheck.position.y + groundDistance,groundCheck.position.x), Vector3.down);
     }
 
 }
