@@ -18,7 +18,7 @@ public class PlayerMovement : MonoBehaviour
 
     private bool isGrounded = false;
 
-    private float coyoteTime = 0.2f;
+    private float coyoteTime = 0.8f;
     private float coyoteTimeCounter; 
 
     private void Awake()
@@ -60,10 +60,14 @@ public class PlayerMovement : MonoBehaviour
 
     public void Jump(InputAction.CallbackContext context)
     {
-        if (context.performed && IsGrounded())
+        if (context.performed && coyoteTimeCounter > 0f)
         {
+            coyoteTimeCounter = -0f;
+
             vertPos = jumpForce;
+
             Debug.Log(moveAction + "Press");
+            Debug.Log(coyoteTimeCounter + "Timer");
         }
     }
 
