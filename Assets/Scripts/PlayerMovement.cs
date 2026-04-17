@@ -17,9 +17,13 @@ public class PlayerMovement : MonoBehaviour
     public float groundDistance = 0.5f;
 
     private bool isGrounded = false;
+    private bool jumpPerformed = false;
 
-    private float coyoteTime = 0.8f;
-    private float coyoteTimeCounter; 
+    private float coyoteTime = 2f;
+    private float coyoteTimeCounter;
+
+    private float jumpBuffer = 2f;
+    private float jumpBufferCounter;
 
     private void Awake()
     {
@@ -39,32 +43,46 @@ public class PlayerMovement : MonoBehaviour
         //v.y = vertPos;
         //rb.linearVelocity = v;
 
-        Debug.Log(transform.position);
-        Debug.Log(vertPos);
+        //Debug.Log(transform.position);
+        //Debug.Log(vertPos);
+        Debug.Log(coyoteTimeCounter + "Timer");
 
         if (IsGrounded())
-        {
+        { 
             coyoteTimeCounter = coyoteTime;
+            jumpBufferCounter = jumpBuffer;
         }
         else
         {
-            coyoteTimeCounter -= Time.deltaTime; 
-        }
+            if (jumpPerformed)
+            {
+                coyoteTimeCounter = 0f;
+
+                jumpPerformed = false;
+                Debug.Log("Jump");
+            }
+            else
+            {
+                coyoteTimeCounter -= Time.deltaTime;
+            }
+        }     
     }
 
-    public void Move(InputAction.CallbackContext context)
+    private void Move(InputAction.CallbackContext context)
     {
         moveAction = context.ReadValue<Vector2>();
         Debug.Log(moveAction + "Press");
     }
 
-    public void Jump(InputAction.CallbackContext context)
+    private void Jump(InputAction.CallbackContext context)
     {
         if (context.performed && coyoteTimeCounter > 0f)
         {
             coyoteTimeCounter = 0f;
 
             vertPos = jumpForce;
+
+            jumpPerformed = true;
 
             Debug.Log(moveAction + "Press");
             Debug.Log(coyoteTimeCounter + "Timer");
@@ -75,14 +93,14 @@ public class PlayerMovement : MonoBehaviour
     {
         if (IsGrounded() && vertPos < 0)
         {
-            Debug.Log("Grounded" + vertPos);
+            //Debug.Log("Grounded" + vertPos);
             vertPos = -2f;
         }
 
         else
         {
             vertPos += gravity * Time.deltaTime;
-            Debug.Log("Not Grounded!" + vertPos);
+            //Debug.Log("Not Grounded!" + vertPos);
         }
     }
 
