@@ -3,7 +3,6 @@ using UnityEngine.InputSystem;
 
 public class PlayerMovement : MonoBehaviour
 {
-    public float gravity = -9.81f;
     public float jumpForce = 5f;
     public float speed = 5f;
     public float groundDisplacement = 0.1f;
@@ -28,16 +27,17 @@ public class PlayerMovement : MonoBehaviour
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
-        rb.useGravity = false;
     }
 
     private void Update()
     {
-        ApplyGravity();
+        //ApplyGravity();
 
-        Vector3 deltaDirection = new Vector3(moveAction.x * speed, vertPos, moveAction.y * speed);
+        isGrounded = IsGrounded();
 
-        rb.linearVelocity = deltaDirection;
+        //Vector3 deltaDirection = new Vector3(moveAction.x * speed, vertPos, moveAction.y * speed);
+
+        //rb.linearVelocity = deltaDirection;
 
         //Vector3 v = rb.linearVelocity;
         //v.y = vertPos;
@@ -45,27 +45,43 @@ public class PlayerMovement : MonoBehaviour
 
         //Debug.Log(transform.position);
         //Debug.Log(vertPos);
-        Debug.Log(coyoteTimeCounter + "Timer");
 
-        if (IsGrounded())
-        { 
-            coyoteTimeCounter = coyoteTime;
-            jumpBufferCounter = jumpBuffer;
-        }
-        else
-        {
-            if (jumpPerformed)
-            {
-                coyoteTimeCounter = 0f;
+        Vector3 velocity = rb.linearVelocity;
+        velocity.x = moveAction.x * speed;
+        velocity.z = moveAction.y * speed;
+        rb.linearVelocity = velocity;
 
-                jumpPerformed = false;
-                Debug.Log("Jump");
-            }
-            else
-            {
-                coyoteTimeCounter -= Time.deltaTime;
-            }
-        }     
+        //Debug.Log(coyoteTimeCounter + "Timer");
+        //Debug.Log(jumpBufferCounter + "Jump Buffer");
+
+        //if (jumpPerformed)
+        //{
+        //    jumpBufferCounter = jumpBuffer;
+        //}
+        //else
+        //{
+        //    jumpBufferCounter -= Time.deltaTime;
+        //}
+
+        //if (IsGrounded())
+        //{ 
+        //    coyoteTimeCounter = coyoteTime;
+        //}
+        //else
+        //{
+        //    if (jumpPerformed)
+        //    {
+        //        coyoteTimeCounter = 0f;
+
+        //        jumpPerformed = false;
+
+        //        Debug.Log("Jump");
+        //    }
+        //    else
+        //    {
+        //        coyoteTimeCounter -= Time.deltaTime;
+        //    }
+        //}
     }
 
     private void Move(InputAction.CallbackContext context)
@@ -76,33 +92,33 @@ public class PlayerMovement : MonoBehaviour
 
     private void Jump(InputAction.CallbackContext context)
     {
-        if (context.performed && coyoteTimeCounter > 0f)
+        if (context.performed && isGrounded)
         {
-            coyoteTimeCounter = 0f;
+            //jumpPerformed = true;
 
-            vertPos = jumpForce;
+            //vertPos = jumpForce;
 
-            jumpPerformed = true;
+            //Debug.Log(moveAction + "Press");
+            //Debug.Log(coyoteTimeCounter + "Timer");
 
-            Debug.Log(moveAction + "Press");
-            Debug.Log(coyoteTimeCounter + "Timer");
+            rb.linearVelocity = new Vector3(rb.linearVelocity.x, jumpForce, rb.linearVelocity.z);
         }
     }
 
-    private void ApplyGravity()
-    {
-        if (IsGrounded() && vertPos < 0)
-        {
-            //Debug.Log("Grounded" + vertPos);
-            vertPos = -2f;
-        }
+    //private void ApplyGravity()
+    //{
+    //    if (IsGrounded() && vertPos < 0)
+    //    {
+    //        //Debug.Log("Grounded" + vertPos);
+    //        vertPos = -2f;
+    //    }
 
-        else
-        {
-            vertPos += gravity * Time.deltaTime;
-            //Debug.Log("Not Grounded!" + vertPos);
-        }
-    }
+    //    else
+    //    {
+    //        vertPos += gravity * Time.deltaTime;
+    //        //Debug.Log("Not Grounded!" + vertPos);
+    //    }
+    //}
 
     private bool IsGrounded()
     {
@@ -123,7 +139,7 @@ public class PlayerMovement : MonoBehaviour
     private void OnDrawGizmos()
     {
         // Gizmos.DrawSphere(groundCheck.position, groundDistance);
-        Gizmos.DrawRay(new Vector3(groundCheck.position.x,groundCheck.position.y + groundDistance,groundCheck.position.x), Vector3.down);
+        Gizmos.DrawRay(new Vector3(groundCheck.position.x,groundCheck.position.y + groundDistance, groundCheck.position.z), Vector3.down);
     }
 
 }
