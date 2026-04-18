@@ -13,7 +13,7 @@ public class PlayerMovement : MonoBehaviour
 
     [SerializeField] private Transform groundCheck;
     [SerializeField] private LayerMask groundMask;
-    public float groundDistance = 0.5f;
+    public float groundDistance = 1f;
 
     private bool isGrounded = false;
     private bool jumpPerformed = false;
@@ -31,57 +31,42 @@ public class PlayerMovement : MonoBehaviour
 
     private void Update()
     {
-        //ApplyGravity();
-
         isGrounded = IsGrounded();
-
-        //Vector3 deltaDirection = new Vector3(moveAction.x * speed, vertPos, moveAction.y * speed);
-
-        //rb.linearVelocity = deltaDirection;
-
-        //Vector3 v = rb.linearVelocity;
-        //v.y = vertPos;
-        //rb.linearVelocity = v;
-
-        //Debug.Log(transform.position);
-        //Debug.Log(vertPos);
 
         Vector3 velocity = rb.linearVelocity;
         velocity.x = moveAction.x * speed;
         velocity.z = moveAction.y * speed;
         rb.linearVelocity = velocity;
 
-        //Debug.Log(coyoteTimeCounter + "Timer");
-        //Debug.Log(jumpBufferCounter + "Jump Buffer");
+        if (isGrounded)
+        {
+            coyoteTimeCounter = coyoteTime;
+        }
+        else
+        {
+            if (jumpPerformed)
+            {
+                coyoteTimeCounter = 0f;
+                jumpPerformed = false;
+            }
+            
+            coyoteTimeCounter -= Time.deltaTime;
+        }
 
-        //if (jumpPerformed)
-        //{
-        //    jumpBufferCounter = jumpBuffer;
-        //}
-        //else
-        //{
-        //    jumpBufferCounter -= Time.deltaTime;
-        //}
+        if (isGrounded)
+        {
+            coyoteTimeCounter = coyoteTime;
+        }
+        else
+        {
+            if (jumpPerformed)
+            {
+                coyoteTimeCounter = 0f;
+                jumpPerformed = false;
+            }
 
-        //if (IsGrounded())
-        //{ 
-        //    coyoteTimeCounter = coyoteTime;
-        //}
-        //else
-        //{
-        //    if (jumpPerformed)
-        //    {
-        //        coyoteTimeCounter = 0f;
-
-        //        jumpPerformed = false;
-
-        //        Debug.Log("Jump");
-        //    }
-        //    else
-        //    {
-        //        coyoteTimeCounter -= Time.deltaTime;
-        //    }
-        //}
+            coyoteTimeCounter -= Time.deltaTime;
+        }
     }
 
     private void Move(InputAction.CallbackContext context)
@@ -92,33 +77,12 @@ public class PlayerMovement : MonoBehaviour
 
     private void Jump(InputAction.CallbackContext context)
     {
-        if (context.performed && isGrounded)
+        if (context.performed && coyoteTimeCounter > 0)
         {
-            //jumpPerformed = true;
-
-            //vertPos = jumpForce;
-
-            //Debug.Log(moveAction + "Press");
-            //Debug.Log(coyoteTimeCounter + "Timer");
-
             rb.linearVelocity = new Vector3(rb.linearVelocity.x, jumpForce, rb.linearVelocity.z);
+            jumpPerformed = true;
         }
     }
-
-    //private void ApplyGravity()
-    //{
-    //    if (IsGrounded() && vertPos < 0)
-    //    {
-    //        //Debug.Log("Grounded" + vertPos);
-    //        vertPos = -2f;
-    //    }
-
-    //    else
-    //    {
-    //        vertPos += gravity * Time.deltaTime;
-    //        //Debug.Log("Not Grounded!" + vertPos);
-    //    }
-    //}
 
     private bool IsGrounded()
     {
@@ -126,11 +90,13 @@ public class PlayerMovement : MonoBehaviour
 
         if (isGrounded)
         {
+            Debug.Log("Grounded");
             return true;
         }
 
         else
         {
+            Debug.Log("Not Grounded");
             return false;
         }
     }
