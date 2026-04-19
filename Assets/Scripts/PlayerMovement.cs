@@ -16,12 +16,13 @@ public class PlayerMovement : MonoBehaviour
 
     private bool isGrounded = false;
     private bool jumpIntent;
-    private int jumpTracker = 0;
+    private bool hasJumped = false;
+    private bool wasGrounded = false;
 
     private float coyoteTime = 2f;
     private float coyoteTimeCounter;
 
-    private float jumpBuffer = 2f;
+    private float jumpBuffer = 0.2f;
     private float jumpBufferCounter;
 
     private void Awake()
@@ -38,63 +39,41 @@ public class PlayerMovement : MonoBehaviour
         velocity.z = moveAction.y * speed;
         rb.linearVelocity = velocity;
 
-        //jumpBufferCounter -= Time.deltaTime;
+        if (isGrounded && !wasGrounded)
+        {
+            coyoteTimeCounter = coyoteTime;
+
+            hasJumped = false;
+        }
+        else if (!isGrounded)
+        {
+            coyoteTimeCounter -= Time.deltaTime;
+        }
 
         if (jumpIntent)
         {
-            jumpTracker++;
-        }
-
-        if (isGrounded)
-        {
-            if (jumpTracker <= 1 && jumpTracker > 0)
-            {
-                jumpBufferCounter = jumpBuffer;
-            }
-
-            if (jumpBufferCounter > 0f && jumpTracker >= 1)
-            {
-                PerformJump();
-            }
-
-            coyoteTimeCounter = coyoteTime;
-            jumpBufferCounter = 0;
-
-            jumpTracker = 0;
+            jumpBufferCounter = jumpBuffer;
         }
         else
         {
-            coyoteTimeCounter -= Time.deltaTime;
-
-            if (jumpTracker <= 1 && jumpTracker > 0)
-            {
-                jumpBufferCounter = jumpBuffer;
-                //jumpPerformed = false;
-            }   
-            else
-            {
-                jumpBufferCounter -= Time.deltaTime;
-            }
-
-            if (coyoteTimeCounter > 0f && jumpBufferCounter > 0f)
-            {
-                PerformJump();
-
-                jumpBufferCounter = 0f;
-                coyoteTimeCounter = 0f;
-                //jumpPerformed = false;
-
-            }
-
+            jumpBufferCounter -= Time.deltaTime;
         }
 
-        jumpIntent = false;
-        jumpBufferCounter -= Time.deltaTime;
+        //jumpBufferCounter -= Time.deltaTime;
+
+        if (!hasJumped && coyoteTimeCounter > 0 && jumpBufferCounter > 0)
+        {
+            PerformJump();
+            hasJumped = true;
+        }
+
+        wasGrounded = isGrounded;
+
+        //jumpBufferCounter -= Time.deltaTime;
 
         Debug.Log(jumpBufferCounter + "Jump Buffer");
         Debug.Log(coyoteTimeCounter + "Coyote Time");
-        Debug.Log(jumpIntent + "Jump Intent");
-        Debug.Log(jumpTracker + "Jump Tracker");
+        Debug.Log(hasJumped + "Has Jumped");
     }
 
     private void Move(InputAction.CallbackContext context)
@@ -107,7 +86,6 @@ public class PlayerMovement : MonoBehaviour
     {
         if (context.performed)
         {
-            //jumpBufferCounter = jumpBuffer;
             jumpIntent = true;
         }
         else
@@ -122,8 +100,6 @@ public class PlayerMovement : MonoBehaviour
 
         jumpBufferCounter = 0f;
         coyoteTimeCounter = 0f;
-
-        //jumpPerformed = false;
     }
 
     private bool IsGrounded()
