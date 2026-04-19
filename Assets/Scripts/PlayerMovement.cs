@@ -22,7 +22,7 @@ public class PlayerMovement : MonoBehaviour
     private float coyoteTime = 2f;
     private float coyoteTimeCounter;
 
-    private float jumpBuffer = 0.2f;
+    private float jumpBuffer = 2.2f;
     private float jumpBufferCounter;
 
     private void Awake()
@@ -50,16 +50,15 @@ public class PlayerMovement : MonoBehaviour
             coyoteTimeCounter -= Time.deltaTime;
         }
 
-        if (jumpIntent)
-        {
-            jumpBufferCounter = jumpBuffer;
-        }
-        else
-        {
-            jumpBufferCounter -= Time.deltaTime;
-        }
-
-        //jumpBufferCounter -= Time.deltaTime;
+        //if (jumpIntent)
+        //{
+        //    jumpBufferCounter = jumpBuffer;
+        //}
+        //else
+        //{
+        //    jumpBufferCounter -= Time.deltaTime;
+        //}
+        jumpBufferCounter -= Time.deltaTime;
 
         if (!hasJumped && coyoteTimeCounter > 0 && jumpBufferCounter > 0)
         {
@@ -67,9 +66,18 @@ public class PlayerMovement : MonoBehaviour
             hasJumped = true;
         }
 
-        wasGrounded = isGrounded;
+        //if (isGrounded && !wasGrounded)
+        //{
+        //    coyoteTimeCounter = coyoteTime;
 
-        //jumpBufferCounter -= Time.deltaTime;
+        //    hasJumped = false;
+        //}
+        //else if (!isGrounded)
+        //{
+        //    coyoteTimeCounter -= Time.deltaTime;
+        //}
+
+        wasGrounded = isGrounded;
 
         Debug.Log(jumpBufferCounter + "Jump Buffer");
         Debug.Log(coyoteTimeCounter + "Coyote Time");
@@ -86,12 +94,13 @@ public class PlayerMovement : MonoBehaviour
     {
         if (context.performed)
         {
-            jumpIntent = true;
+            //jumpIntent = true;
+            jumpBufferCounter = jumpBuffer;
         }
-        else
-        {
-            jumpIntent = false;
-        }
+        //else
+        //{
+        //    jumpIntent = false;
+        //}
     }
 
     void PerformJump()
