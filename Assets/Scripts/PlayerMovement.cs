@@ -9,14 +9,14 @@ public class PlayerMovement : MonoBehaviour
 
     private Vector2 moveAction;
     private Rigidbody rb;
-    private float vertPos = 0;
 
     [SerializeField] private Transform groundCheck;
     [SerializeField] private LayerMask groundMask;
     public float groundDistance = 1f;
 
     private bool isGrounded = false;
-    private bool jumpPerformed = false;
+    private bool jumpIntent;
+    private int jumpTracker = 0;
 
     private float coyoteTime = 2f;
     private float coyoteTimeCounter;
@@ -38,35 +38,63 @@ public class PlayerMovement : MonoBehaviour
         velocity.z = moveAction.y * speed;
         rb.linearVelocity = velocity;
 
-        if (isGrounded)
+        //jumpBufferCounter -= Time.deltaTime;
+
+        if (jumpIntent)
         {
-            coyoteTimeCounter = coyoteTime;
-        }
-        else
-        {
-            if (jumpPerformed)
-            {
-                coyoteTimeCounter = 0f;
-                jumpPerformed = false;
-            }
-            
-            coyoteTimeCounter -= Time.deltaTime;
+            jumpTracker++;
         }
 
         if (isGrounded)
         {
+            if (jumpTracker <= 1 && jumpTracker > 0)
+            {
+                jumpBufferCounter = jumpBuffer;
+            }
+
+            if (jumpBufferCounter > 0f && jumpTracker >= 1)
+            {
+                PerformJump();
+            }
+
             coyoteTimeCounter = coyoteTime;
+            jumpBufferCounter = 0;
+
+            jumpTracker = 0;
         }
         else
         {
-            if (jumpPerformed)
+            coyoteTimeCounter -= Time.deltaTime;
+
+            if (jumpTracker <= 1 && jumpTracker > 0)
             {
-                coyoteTimeCounter = 0f;
-                jumpPerformed = false;
+                jumpBufferCounter = jumpBuffer;
+                //jumpPerformed = false;
+            }   
+            else
+            {
+                jumpBufferCounter -= Time.deltaTime;
             }
 
-            coyoteTimeCounter -= Time.deltaTime;
+            if (coyoteTimeCounter > 0f && jumpBufferCounter > 0f)
+            {
+                PerformJump();
+
+                jumpBufferCounter = 0f;
+                coyoteTimeCounter = 0f;
+                //jumpPerformed = false;
+
+            }
+
         }
+
+        jumpIntent = false;
+        jumpBufferCounter -= Time.deltaTime;
+
+        Debug.Log(jumpBufferCounter + "Jump Buffer");
+        Debug.Log(coyoteTimeCounter + "Coyote Time");
+        Debug.Log(jumpIntent + "Jump Intent");
+        Debug.Log(jumpTracker + "Jump Tracker");
     }
 
     private void Move(InputAction.CallbackContext context)
@@ -77,11 +105,25 @@ public class PlayerMovement : MonoBehaviour
 
     private void Jump(InputAction.CallbackContext context)
     {
-        if (context.performed && coyoteTimeCounter > 0)
+        if (context.performed)
         {
-            rb.linearVelocity = new Vector3(rb.linearVelocity.x, jumpForce, rb.linearVelocity.z);
-            jumpPerformed = true;
+            //jumpBufferCounter = jumpBuffer;
+            jumpIntent = true;
         }
+        else
+        {
+            jumpIntent = false;
+        }
+    }
+
+    void PerformJump()
+    {
+        rb.linearVelocity = new Vector3(rb.linearVelocity.x, jumpForce, rb.linearVelocity.z);
+
+        jumpBufferCounter = 0f;
+        coyoteTimeCounter = 0f;
+
+        //jumpPerformed = false;
     }
 
     private bool IsGrounded()
