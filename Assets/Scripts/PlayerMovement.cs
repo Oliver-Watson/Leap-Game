@@ -42,14 +42,11 @@ public class PlayerMovement : MonoBehaviour
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
-        //Cursor.lockState = CursorLockMode.Locked;
-        //Cursor.visible = false;
     }
 
     private void Update()
     {
         HandleMoveInput();
-        //HandleMouseInput();
 
         isGrounded = IsGrounded();
 
@@ -101,51 +98,14 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    //public void OnMouseMove(InputAction.CallbackContext context)
-    //{
-    //    mouseInput = context.ReadValue<Vector2>();
-    //}
-
-    //private void HandleMouseInput()
-    //{
-    //    mouseX += mouseInput.x * sensitivity * Time.deltaTime;
-
-    //    transform.forward = new Vector3(mouseX, 0f, 0f);
-
-    //    //transform.Rotate(transform.up, mouseX);
-
-    //    //transform.rotation = Quaternion.LookRotation(new Vector3(0, 0, 0), Camera.main.transform.up);
-
-    //    transform.rotation = Quaternion.Euler(0f, mouseX, 0f);
-
-
-    //    //transform.rotation *= Quaternion.Euler(0f, mouseInput.y * sensitivity * Time.deltaTime, 0f);
-
-    //    //pitch -= mouseInput.y * sensitivity * Time.deltaTime;
-    //    //pitch = Mathf.Clamp(pitch, -90f, 90f);
-
-
-    //    //transform.localEulerAngles = new Vector3(transform.localEulerAngles.x, mouseX, 0f);
-
-    //    Debug.Log("Mouse input:" + mouseInput.x);
-    //}
-
     private void HandleMoveInput()
     {
         moveDirection = orientation.forward * moveAction.y + orientation.right * moveAction.x;
-        //Vector3 velocity = rb.linearVelocity;
-        //velocity.x = moveAction.x * speed;
-        //velocity.z = moveAction.y * speed;
-        //rb.linearVelocity = velocity;
         Vector3 velocity = rb.linearVelocity;
         velocity.x = moveDirection.normalized.x * speed;
         velocity.z = moveDirection.normalized.z * speed;
         rb.linearVelocity = velocity;
         Debug.Log("Move Direction: " + moveDirection.normalized);
-
-
-        //moveDirection = transform.forward * moveAction.y + transform.right * moveAction.x;
-        //rb.AddForce(moveDirection.normalized * speed, ForceMode.Force);
     }
 
     private void PerformJump()
