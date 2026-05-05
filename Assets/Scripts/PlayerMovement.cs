@@ -34,6 +34,7 @@ public class PlayerMovement : MonoBehaviour
     public static bool hasJumped = false;
     public static bool jumpedOffGround = false;
     public static bool hasDashed = false;
+    private bool dashCD = true;
     private bool wasGrounded = false;
 
     public static float coyoteTime = 4f;
@@ -60,15 +61,9 @@ public class PlayerMovement : MonoBehaviour
 
         HandleJumpCondition();
 
-        jumpBufferCounter -= Time.deltaTime;
-        jumpBufferCounter = Mathf.Max(jumpBufferCounter, min);
-
-        dashTimeCounter -= Time.deltaTime;
-        dashTimeCounter = Mathf.Max(dashTimeCounter, 0f);
-
         HandleDashCondition();
 
-        wasGrounded = isGrounded;
+        
 
         Debug.Log(jumpBufferCounter + "Jump Buffer");
         Debug.Log(coyoteTimeCounter + "Coyote Time");
@@ -95,18 +90,12 @@ public class PlayerMovement : MonoBehaviour
     {
         if (context.performed)
         {
-            //moveDirection = orientation.forward * moveAction.y + orientation.right * moveAction.x;
-            //Vector3 dash = transform.position;
-            //dash.x += 200 * Time.deltaTime;
-            //transform.position = dash;
-            //moveDirection = orientation.forward;
-            //Vector3 velocity = transform.position;
-            //velocity.x += moveDirection.normalized.x * dashForce;
-            //velocity.z += moveDirection.normalized.z * dashForce;
-            //transform.position = velocity;
-            Debug.Log("Dash");
+            if (!hasDashed)
+            {
+                Debug.Log("Dash");
 
-            dashTimeCounter = dashTime;
+                dashTimeCounter = dashTime;
+            }
         }
     }
 
@@ -124,6 +113,14 @@ public class PlayerMovement : MonoBehaviour
         dashForce -= dashDrag * Time.deltaTime;
     }
 
+    private void PerformJump()
+    {
+        rb.linearVelocity = new Vector3(rb.linearVelocity.x, jumpForce, rb.linearVelocity.z);
+
+        jumpBufferCounter = 0f;
+        coyoteTimeCounter = 0f;
+    }
+
     private void HandleMoveInput()
     {
         moveDirection = orientation.forward * moveAction.y + orientation.right * moveAction.x;
@@ -132,14 +129,6 @@ public class PlayerMovement : MonoBehaviour
         velocity.z = moveDirection.normalized.z * speed;
         rb.linearVelocity = velocity;
         Debug.Log("Move Direction: " + moveAction.y);
-    }
-
-    private void PerformJump()
-    {
-        rb.linearVelocity = new Vector3(rb.linearVelocity.x, jumpForce, rb.linearVelocity.z);
-
-        jumpBufferCounter = 0f;
-        coyoteTimeCounter = 0f;
     }
 
     private void HandleJumpCondition()
@@ -167,6 +156,11 @@ public class PlayerMovement : MonoBehaviour
                 jumpedOffGround = true;
             }
         }
+
+        jumpBufferCounter -= Time.deltaTime;
+        jumpBufferCounter = Mathf.Max(jumpBufferCounter, min);
+
+        wasGrounded = isGrounded;
     }
 
     private void HandleDashCondition()
@@ -177,6 +171,14 @@ public class PlayerMovement : MonoBehaviour
             //dashForce = dashReset;
             hasDashed = true;
         }
+        if (dashTimeCounter == 0 && isGrounded)
+        {
+            hasDashed = false;
+            dashForce = dashReset;
+        }
+
+        dashTimeCounter -= Time.deltaTime;
+        dashTimeCounter = Mathf.Max(dashTimeCounter, 0f);
     }
 
     public bool IsGrounded()
