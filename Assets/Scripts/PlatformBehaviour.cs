@@ -56,18 +56,16 @@ public class PlatformBehaviour : MonoBehaviour
     private void PlatformMovement()
     {
         // Determine if platform can move or is fixed to the start position
-        //GetPlatformPosition();
+        GetPlatformPosition();
 
         // If the player has fallen of the platform without jumping 
         if (PlayerMovement.coyoteTimeCounter < PlayerMovement.coyoteTime && !PlayerMovement.jumpedOffGround)
         {
-            HandleDirection();
-
-            //GetPlatformVelocity();
+            GetPlatformVelocity();
 
             Debug.Log("Platform move");
 
-            
+            HandleDirection();
         }
         else
         {
@@ -77,154 +75,85 @@ public class PlatformBehaviour : MonoBehaviour
 
     private void GetPlatformPosition()
     {
-        //if (axisX)
-        //{
-        //    platformPositionx = transform.position.x;
-        //}
-        //else
-        //{
-        //    platformPositionx = startPosition.x;
-        //}
+        if (axisX)
+        {
+            platformPositionx = transform.position.x;
+        }
+        else
+        {
+            platformPositionx = startPosition.x;
+        }
 
-        //if (axisY)
-        //{
-        //    platformPositiony = transform.position.y;
-        //}
-        //else
-        //{
-        //    platformPositiony = startPosition.y;
-        //}
+        if (axisY)
+        {
+            platformPositiony = transform.position.y;
+        }
+        else
+        {
+            platformPositiony = startPosition.y;
+        }
 
-        //if (axisZ)
-        //{
-        //    platformPositionz = transform.position.z;
-        //}
-        //else
-        //{
-        //    platformPositionz = startPosition.z;
-        //}
+        if (axisZ)
+        {
+            platformPositionz = transform.position.z;
+        }
+        else
+        {
+            platformPositionz = startPosition.z;
+        }
 
-        //// Get final platform position where vectors xyz can either be moved or are fixed to the start position 
-        //platformPosition = new Vector3(platformPositionx, platformPositiony, platformPositionz);
+        // Get final platform position where vectors xyz can either be moved or are fixed to the start position 
+        platformPosition = new Vector3(platformPositionx, platformPositiony, platformPositionz);
     }
 
     private void GetPlatformVelocity()
     {
-        //for (int i = 0; i <= 2; i++)
-        //{
-        //    float[] position = { platformPosition.x, platformPosition.y, platformPosition.z };
-        //    float[] startPos = { startPosition.x, startPosition.y, startPosition.z };
-        //    float[] endPosition = { endPositionX, endPositionY, endPositionZ };
-        //    bool[] moveThisAxis = { axisX, axisY, axisZ };
+        platformVelocity = platformPosition;
 
-        //    platformVelocity = transform.position;
-
-        //if (axisX)
-        //{
-        //    if (right)
-        //    {
-        //        platformVelocity.x += speed * Time.deltaTime;
-        //    }
-        //    else
-        //    {
-        //        platformVelocity.x -= speed * Time.deltaTime;
-        //    }
-        //}
-        //else
-        //{
-        //    platformVelocity.x = startPosition.x;
-        //}
-
-        //if (axisY)
-        //{
-        //    if (up)
-        //    {
-        //        platformVelocity.y += speed * Time.deltaTime;
-        //    }
-        //    else
-        //    {
-        //        platformVelocity.y -= speed * Time.deltaTime;
-        //    }
-        //}
-        //else
-        //{
-        //    platformVelocity.y = startPosition.x;
-        //}
-
-        //if (axisZ)
-        //{
-        //    if (forwards)
-        //    {
-        //        platformVelocity.z += speed * Time.deltaTime;
-        //    }
-        //    else
-        //    {
-        //        platformVelocity.z -= speed * Time.deltaTime;
-        //    }
-        //}
-        //else
-        //{
-        //    platformVelocity.z = startPosition.z;
-        //}
-
-        //transform.position = platformVelocity;
-    }
-
-    private void HandleDirection()
-    {
         if (axisX)
         {
             if (right)
             {
-                platformVelocity.x += speed * Time.deltaTime;
+                platformVelocity.x = platformPosition.x + speed * Time.deltaTime;
             }
             else
             {
-                platformVelocity.x -= speed * Time.deltaTime;
+                platformVelocity.x = platformPosition.x + speed * Time.deltaTime;
             }
-        }
-        else
-        {
-            platformVelocity.x = startPosition.x;
         }
 
         if (axisY)
         {
             if (up)
             {
-                platformVelocity.y += speed * Time.deltaTime;
+                platformVelocity.y = platformPosition.y + speed * Time.deltaTime;
             }
             else
             {
-                platformVelocity.y -= speed * Time.deltaTime;
+                platformVelocity.y = platformPosition.y + speed * Time.deltaTime;
             }
-        }
-        else
-        {
-            platformVelocity.y = startPosition.x;
         }
 
         if (axisZ)
         {
             if (forwards)
             {
-                platformVelocity.z += speed * Time.deltaTime;
+                platformVelocity.z = platformPosition.z + speed * Time.deltaTime;
             }
             else
             {
-                platformVelocity.z -= speed * Time.deltaTime;
+                platformVelocity.z = platformPosition.z + speed * Time.deltaTime;
             }
-        }
-        else
-        {
-            platformVelocity.z = startPosition.z;
         }
 
         transform.position = platformVelocity;
+    }
 
+    private void HandleDirection()
+    {
         for (int i = 0; i <= 2; i++)
         {
-            float[] position = { transform.position.x, transform.position.y, transform.position.z };
+            float[] position = { platformPosition.x, platformPosition.y, platformPosition.z };
             float[] startPos = { startPosition.x, startPosition.y, startPosition.z };
             float[] endPosition = { endPositionX, endPositionY, endPositionZ };
             bool[] moveThisAxis = { axisX, axisY, axisZ };
