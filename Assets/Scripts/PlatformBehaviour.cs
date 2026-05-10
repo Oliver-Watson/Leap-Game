@@ -82,7 +82,7 @@ public class PlatformBehaviour : MonoBehaviour
         // loop for xyz axis
         for (int i = 0; i <= 2; i++)
         {
-            // If the end position is greater than the start position
+            // If the end position is greater than the start position and respective axis is to be moved
             if (endPosition[i] >= startPos[i] && moveThisAxis[i])
             {
                 // If if the x, y or z of the transform is less than or equal to the x, y or z of the start position and visa versa 
@@ -91,7 +91,7 @@ public class PlatformBehaviour : MonoBehaviour
                     // Platform should change direction
                     changeDirection = true;
                 }
-                // Else if indexed axis is to be moved but should not change direction
+                // Else if the respective axis is to be moved but should not change direction
                 else
                 {
                     changeDirection = false;
@@ -119,6 +119,7 @@ public class PlatformBehaviour : MonoBehaviour
 
             // Reassign platformVelocity to the updated storedPlatformVelocity array
             platformVelocity = new Vector3(storePlatformVelocity[0], storePlatformVelocity[1], storePlatformVelocity[2]);
+            // Update the transforms position
             transform.position = platformVelocity;
 
             Debug.Log(speed + "speed");
