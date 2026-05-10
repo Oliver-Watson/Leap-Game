@@ -12,7 +12,8 @@ public class PlayerMovement : MonoBehaviour
 {
     [SerializeField] private float jumpForce = 10f;
     [SerializeField] private float dashForce = 2f;
-    [SerializeField] private float dashReset = 2f;
+    private float currentDashForce;
+    // [SerializeField] private float dashReset = 2f;
     [SerializeField] private float dashDrag = 2f;
     public float speed = 5f;
     public float groundDisplacement = 0.1f;
@@ -23,7 +24,16 @@ public class PlayerMovement : MonoBehaviour
 
     private Vector2 moveAction;
     private Vector2 mouseInput;
+
     private Vector3 moveDirection;
+
+    private Vector3 dashMoveDirection;
+    private Vector3 lastMoveDirection;
+    private Vector3 dashVelocity;
+
+    [SerializeField] private bool normalisedDash;
+    [SerializeField] private bool multiDirectionalDash;
+
     private Rigidbody rb;
 
     [SerializeField] private Transform groundCheck;
@@ -34,6 +44,10 @@ public class PlayerMovement : MonoBehaviour
     public static bool hasJumped = false;
     public static bool jumpedOffGround = false;
     public static bool hasDashed = false;
+
+    [SerializeField] private int allowedDash = 1;
+    private int dashCounter = 0;
+
     private bool dashCD = true;
     private bool wasGrounded = false;
 
@@ -43,7 +57,7 @@ public class PlayerMovement : MonoBehaviour
     private float jumpBuffer = 0.2f;
     private float jumpBufferCounter;
 
-    private float dashTime = 0.5f;
+    [SerializeField] private float dashTime = 0.5f;
     private float dashTimeCounter;
 
     private float min = -1f;
@@ -51,6 +65,7 @@ public class PlayerMovement : MonoBehaviour
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
+        currentDashForce = dashForce;
     }
 
     private void Update()
@@ -62,8 +77,6 @@ public class PlayerMovement : MonoBehaviour
         HandleJumpCondition();
 
         HandleDashCondition();
-
-        
 
         Debug.Log(jumpBufferCounter + "Jump Buffer");
         Debug.Log(coyoteTimeCounter + "Coyote Time");
@@ -90,12 +103,36 @@ public class PlayerMovement : MonoBehaviour
     {
         if (context.performed)
         {
+            //dashCounter++;
+
             if (!hasDashed)
             {
                 Debug.Log("Dash");
 
                 dashTimeCounter = dashTime;
+
+                GetDashDirection();
             }
+        }
+    }
+
+    private void GetDashDirection()
+    {
+        if (multiDirectionalDash)
+        {
+            if (moveAction.y == 0 && moveAction.x == 0)
+            {
+                dashMoveDirection = orientation.forward;
+            }
+            else
+            {
+                dashMoveDirection = orientation.forward * moveAction.y + orientation.right * moveAction.x;
+            }
+        }
+
+        else if (normalisedDash)
+        {
+            dashMoveDirection = orientation.forward;
         }
     }
 
@@ -105,12 +142,14 @@ public class PlayerMovement : MonoBehaviour
 
         //rb.AddForce(orientation.forward * dashForce, ForceMode.Force);
 
-        moveDirection = orientation.forward;
-        Vector3 velocity = rb.linearVelocity;
-        velocity.x = moveDirection.normalized.x * dashForce;
-        velocity.z = moveDirection.normalized.z * dashForce;
-        rb.linearVelocity = velocity;
-        dashForce -= dashDrag * Time.deltaTime;
+        Vector3 dashVelocity = rb.linearVelocity;
+        dashVelocity.x = dashMoveDirection.normalized.x * currentDashForce;
+        dashVelocity.z = dashMoveDirection.normalized.z * currentDashForce;
+        rb.linearVelocity = dashVelocity;
+        currentDashForce -= dashDrag * Time.deltaTime;
+        currentDashForce = Mathf.Max(currentDashForce, 0f);
+
+        //lastMoveDirection = moveDirection;
     }
 
     private void PerformJump()
@@ -123,12 +162,15 @@ public class PlayerMovement : MonoBehaviour
 
     private void HandleMoveInput()
     {
-        moveDirection = orientation.forward * moveAction.y + orientation.right * moveAction.x;
-        Vector3 velocity = rb.linearVelocity;
-        velocity.x = moveDirection.normalized.x * speed;
-        velocity.z = moveDirection.normalized.z * speed;
-        rb.linearVelocity = velocity;
-        Debug.Log("Move Direction: " + moveAction.y);
+        if (dashTimeCounter <= 0)
+        {
+            moveDirection = orientation.forward * moveAction.y + orientation.right * moveAction.x;
+            Vector3 velocity = rb.linearVelocity;
+            velocity.x = moveDirection.normalized.x * speed;
+            velocity.z = moveDirection.normalized.z * speed;
+            rb.linearVelocity = velocity;
+            Debug.Log("Move Direction: " + moveAction.y);
+        }
     }
 
     private void HandleJumpCondition()
@@ -170,11 +212,13 @@ public class PlayerMovement : MonoBehaviour
             PerformDash();
             //dashForce = dashReset;
             hasDashed = true;
+            //dashCounter++;
         }
-        if (dashTimeCounter == 0 && isGrounded)
+        if (dashTimeCounter <= 0f && isGrounded)
         {
             hasDashed = false;
-            dashForce = dashReset;
+            currentDashForce = dashForce;
+            dashCounter = 0;
         }
 
         dashTimeCounter -= Time.deltaTime;
