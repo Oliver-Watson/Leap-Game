@@ -1,6 +1,10 @@
 using NUnit.Framework;
+using System;
+using System.Runtime.CompilerServices;
+using System.Xml.Serialization;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
+using UnityEngine.InputSystem.Utilities;
 
 public class PlatformBehaviour : MonoBehaviour
 {
@@ -14,14 +18,32 @@ public class PlatformBehaviour : MonoBehaviour
 
     private bool changeDirectionLast = false;
 
-    private float startPosition;
-    [SerializeField] private float endPosition = 0;
+    private Vector3 startPosition;
+
+    private Vector3 platformVelocity;
+
+    [SerializeField] private float endPositionX;
+    [SerializeField] private float endPositionY;
+    [SerializeField] private float endPositionZ;
+
+    private float platformPositionx;
+    private float platformPositiony;
+    private float platformPositionz;
+    private Vector3 platformPosition;
+
+    [SerializeField] private bool axisX = false;
+    [SerializeField] private bool axisY = false;
+    [SerializeField] private bool axisZ = false;
+
+    [SerializeField] private bool right = false;
+    [SerializeField] private bool up = false;
+    [SerializeField] private bool forwards = false;
 
     void Start()
     {
         rb = GetComponent<Rigidbody>();
 
-        startPosition = transform.position.z;
+        startPosition = transform.position;
         //endPosition = transform.position.z + 10;
     }
 
@@ -32,43 +54,142 @@ public class PlatformBehaviour : MonoBehaviour
 
     private void PlatformMovement()
     {
-        //Vector3 velocity = rb.linearVelocity;
-        //velocity.z = speed;
-        //rb.linearVelocity = velocity;
+        GetPlatformPosition();
 
         if (PlayerMovement.coyoteTimeCounter < PlayerMovement.coyoteTime && !PlayerMovement.jumpedOffGround)
         {
+            GetPlatformVelocity();
 
             Debug.Log("Platform move");
 
-            Vector3 velocity = transform.position;
-            velocity.z = transform.position.z + speed * Time.deltaTime;
-            transform.position = velocity;
-
-            if (transform.position.z <= startPosition || transform.position.z >= endPosition)
-            {
-                changeDirection = true;
-            }
-            else
-            {
-                changeDirection = false;
-            }
-
-            if (changeDirection && !changeDirectionLast)
-            {
-                speed *= direction;
-            }
-
-            changeDirectionLast = changeDirection;
-
-            Debug.Log(speed + "speed");
-
+            HandleDirection();
         }
         else
         {
             Debug.Log("Platform static");
         }
+    }
 
+    private void GetPlatformPosition()
+    {
+        if (axisX)
+        {
+            platformPositionx = transform.position.x;
+        }
+        else
+        {
+            platformPositionx = startPosition.x;
+        }
 
+        if (axisY)
+        {
+            platformPositiony = transform.position.y;
+        }
+        else
+        {
+            platformPositiony = startPosition.y;
+        }
+
+        if (axisZ)
+        {
+            platformPositionz = transform.position.z;
+        }
+        else
+        {
+            platformPositionz = startPosition.z;
+        }
+
+        platformPosition = new Vector3(platformPositionx, platformPositiony, platformPositionz);
+    }
+
+    private void GetPlatformVelocity()
+    {
+        platformVelocity = platformPosition;
+
+        if (axisX)
+        {
+            if (right)
+            {
+                platformVelocity.x = platformPosition.x + speed * Time.deltaTime;
+            }
+            else
+            {
+                platformVelocity.x = platformPosition.x - speed * Time.deltaTime;
+            }
+        }
+        
+        if (axisY)
+        {
+            if (up)
+            {
+                platformVelocity.y = platformPosition.y + speed * Time.deltaTime;
+            }
+            else
+            {
+                platformVelocity.y = platformPosition.y - speed * Time.deltaTime;
+            }
+        }
+        
+        if (axisZ)
+        {
+            if (forwards)
+            {
+                platformVelocity.z = platformPosition.z + speed * Time.deltaTime;
+            }
+            else
+            {
+                platformVelocity.z = platformPosition.z - speed * Time.deltaTime;
+            }
+        }
+
+        transform.position = platformVelocity;
+    }
+
+    private void HandleDirection()
+    {
+        for (int i = 0; i <= 2; i++)
+        {
+            float[] position = { platformPosition.x, platformPosition.y, platformPosition.z };
+            float[] startPos = { startPosition.x, startPosition.y, startPosition.z };
+            float[] endPosition = { endPositionX, endPositionY, endPositionZ };
+            bool[] moveThisAxis = { axisX, axisY, axisZ };
+
+            if (endPosition[i] >= startPos[i])
+            {
+                if (position[i] <= startPos[i] && moveThisAxis[i] || position[i] >= endPosition[i] && moveThisAxis[i])
+                {
+                    changeDirection = true;
+                }
+                else
+                {
+                    changeDirection = false;
+                }
+            }
+            else if (endPosition[i] <= startPos[i])
+            {
+                if (position[i] >= startPos[i] && moveThisAxis[i] || position[i] <= endPosition[i] && moveThisAxis[i])
+                {
+                    changeDirection = true;
+                }
+                else
+                {
+                    changeDirection = false;
+                }
+            }
+
+            if (changeDirection && !changeDirectionLast)
+            {
+                speed *= direction;
+                i = 2;
+            }
+
+            Debug.Log(speed + "speed");
+            Debug.Log(moveThisAxis[i] + "Move this axis");
+            Debug.Log(startPos[i] + "Start array");
+            Debug.Log(position[i] + "Position array");
+            Debug.Log(i + "index");
+        }
+
+        changeDirectionLast = changeDirection;
     }
 }
