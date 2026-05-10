@@ -28,18 +28,9 @@ public class PlatformBehaviour : MonoBehaviour
     [SerializeField] private float endPositionY;
     [SerializeField] private float endPositionZ;
 
-    private float platformPositionx;
-    private float platformPositiony;
-    private float platformPositionz;
-    private Vector3 platformPosition;
-
     [SerializeField] private bool axisX = false;
     [SerializeField] private bool axisY = false;
     [SerializeField] private bool axisZ = false;
-
-    [SerializeField] private bool right = false;
-    [SerializeField] private bool up = false;
-    [SerializeField] private bool forwards = false;
 
     void Start()
     {
@@ -58,17 +49,12 @@ public class PlatformBehaviour : MonoBehaviour
 
     private void PlatformMovement()
     {
-        // Determine if platform can move or is fixed to the start position
-        // GetPlatformPosition();
-
         // If the player has fallen of the platform without jumping 
         if (PlayerMovement.coyoteTimeCounter < PlayerMovement.coyoteTime && !PlayerMovement.jumpedOffGround)
         {
-            //GetPlatformVelocity();
+            HandleDirection();
 
             Debug.Log("Platform move");
-
-            HandleDirection();
         }
         else
         {
@@ -76,114 +62,41 @@ public class PlatformBehaviour : MonoBehaviour
         }
     }
 
-    //private void GetPlatformPosition()
-    //{
-    //    if (axisX)
-    //    {
-    //        platformPositionx = transform.position.x;
-    //    }
-    //    else
-    //    {
-    //        platformPositionx = startPosition.x;
-    //    }
-
-    //    if (axisY)
-    //    {
-    //        platformPositiony = transform.position.y;
-    //    }
-    //    else
-    //    {
-    //        platformPositiony = startPosition.y;
-    //    }
-
-    //    if (axisZ)
-    //    {
-    //        platformPositionz = transform.position.z;
-    //    }
-    //    else
-    //    {
-    //        platformPositionz = startPosition.z;
-    //    }
-
-    //    // Get final platform position where vectors xyz can either be moved or are fixed to the start position 
-    //    platformPosition = new Vector3(platformPositionx, platformPositiony, platformPositionz);
-    //}
-
-    private void GetPlatformVelocity()
-    {
-        platformVelocity = transform.position;
-
-        if (axisX)
-        {
-            if (right)
-            {
-                platformVelocity.x += speed * Time.deltaTime;
-            }
-            else
-            {
-                platformVelocity.x -= speed * Time.deltaTime;
-            }
-        }
-
-        if (axisY)
-        {
-            if (up)
-            {
-                platformVelocity.y += speed * Time.deltaTime;
-            }
-            else
-            {
-                platformVelocity.y -= speed * Time.deltaTime;
-            }
-        }
-
-        if (axisZ)
-        {
-            if (forwards)
-            {
-                platformVelocity.z += speed * Time.deltaTime;
-            }
-            else
-            {
-                platformVelocity.z -= speed * Time.deltaTime;
-            }
-        }
-
-        transform.position = platformVelocity;
-    }
-
-    private void MovePlatform(bool inPositiveDirection)
-    {
-        platformVelocity = transform.position;
-
-        if (inPositiveDirection)
-        {
-            platformVelocity.x += speed * Time.deltaTime;
-            platformVelocity.z += speed * Time.deltaTime;
-            platformVelocity.y += speed * Time.deltaTime;
-        }
-        else
-        {
-            platformVelocity.x -= speed * Time.deltaTime;
-            platformVelocity.z -= speed * Time.deltaTime;
-            platformVelocity.y -= speed * Time.deltaTime;
-        }
-
-        transform.position = platformVelocity;
-    }
-
     private void HandleDirection()
     {
         for (int i = 0; i <= 2; i++)
         {
-            float[] position = { platformPosition.x, platformPosition.y, platformPosition.z };
+            // Store the transform, start position, end position, and axis conditions respectively
+            float[] position = { transform.position.x, transform.position.y, transform.position.z };
             float[] startPos = { startPosition.x, startPosition.y, startPosition.z };
             float[] endPosition = { endPositionX, endPositionY, endPositionZ };
             bool[] moveThisAxis = { axisX, axisY, axisZ };
 
-            if (endPosition[i] >= startPos[i])
+            // Initialise platform velocity as the transforms position
+            platformVelocity = new Vector3(position[0], position[1], position[2]);
+
+            // Store the platform velocity to be altered in the array
+            float[] storePlatformVelocity = { platformVelocity.x, platformVelocity.y, platformVelocity.z };
+
+            // If the end position is greater than the start position
+            if (endPosition[i] >= startPos[i] && moveThisAxis[i])
             {
-                if (position[i] <= startPos[i] && moveThisAxis[i] || position[i] >= endPosition[i] && moveThisAxis[i])
+                // If if the x, y or z of the transform is less than or equal to the x, y or z of the start position and relative is to be moved and visa versa
+                if (position[i] <= startPos[i] || position[i] >= endPosition[i])
+                {
+                    // Platform should change direction
+                    changeDirection = true;
+                }
+                // Else if indexed axis is to be moved but should not change direction
+                else
+                {
+                    changeDirection = false;
+                }
+            }
+            // Opposite conditions
+            else if (endPosition[i] <= startPos[i] && moveThisAxis[i])
+            {
+                if (position[i] >= startPos[i] || position[i] <= endPosition[i])
                 {
                     changeDirection = true;
                 }
@@ -191,27 +104,26 @@ public class PlatformBehaviour : MonoBehaviour
                 {
                     changeDirection = false;
                 }
-
-                MovePlatform(!inPositiveDirection);
             }
-            else if (endPosition[i] <= startPos[i])
+
+            // If the axis is to be moved
+            if (moveThisAxis[i])
             {
-                if (position[i] >= startPos[i] && moveThisAxis[i] || position[i] <= endPosition[i] && moveThisAxis[i])
-                {
-                    changeDirection = true;
-                }
-                else
-                {
-                    changeDirection = false;
-                }
-
-                MovePlatform(inPositiveDirection);
+                // The platform should move on the indexed axis according to the negative or positive speed
+                storePlatformVelocity[i] += speed * Time.deltaTime;
             }
 
+            // Reassign platformVelocity to the indexed updated platform velocity 
+            platformVelocity = new Vector3(storePlatformVelocity[0], storePlatformVelocity[1], storePlatformVelocity[2]);
+            transform.position = platformVelocity;
+
+            // If the platform should change direction
             if (changeDirection && !changeDirectionLast)
             {
+                // Return the negative speed to move platform in the opposite direction
                 speed *= direction;
                 i = 2;
+                
             }
 
             Debug.Log(speed + "speed");
