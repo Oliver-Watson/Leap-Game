@@ -22,6 +22,8 @@ public class PlatformBehaviour : MonoBehaviour
 
     private Vector3 platformVelocity;
 
+    private bool inPositiveDirection = true;
+
     [SerializeField] private float endPositionX;
     [SerializeField] private float endPositionY;
     [SerializeField] private float endPositionZ;
@@ -44,6 +46,7 @@ public class PlatformBehaviour : MonoBehaviour
         rb = GetComponent<Rigidbody>();
 
         startPosition = transform.position;
+
         //endPosition = transform.position.z + 10;
     }
 
@@ -56,12 +59,12 @@ public class PlatformBehaviour : MonoBehaviour
     private void PlatformMovement()
     {
         // Determine if platform can move or is fixed to the start position
-        GetPlatformPosition();
+        // GetPlatformPosition();
 
         // If the player has fallen of the platform without jumping 
         if (PlayerMovement.coyoteTimeCounter < PlayerMovement.coyoteTime && !PlayerMovement.jumpedOffGround)
         {
-            GetPlatformVelocity();
+            //GetPlatformVelocity();
 
             Debug.Log("Platform move");
 
@@ -73,52 +76,52 @@ public class PlatformBehaviour : MonoBehaviour
         }
     }
 
-    private void GetPlatformPosition()
-    {
-        if (axisX)
-        {
-            platformPositionx = transform.position.x;
-        }
-        else
-        {
-            platformPositionx = startPosition.x;
-        }
+    //private void GetPlatformPosition()
+    //{
+    //    if (axisX)
+    //    {
+    //        platformPositionx = transform.position.x;
+    //    }
+    //    else
+    //    {
+    //        platformPositionx = startPosition.x;
+    //    }
 
-        if (axisY)
-        {
-            platformPositiony = transform.position.y;
-        }
-        else
-        {
-            platformPositiony = startPosition.y;
-        }
+    //    if (axisY)
+    //    {
+    //        platformPositiony = transform.position.y;
+    //    }
+    //    else
+    //    {
+    //        platformPositiony = startPosition.y;
+    //    }
 
-        if (axisZ)
-        {
-            platformPositionz = transform.position.z;
-        }
-        else
-        {
-            platformPositionz = startPosition.z;
-        }
+    //    if (axisZ)
+    //    {
+    //        platformPositionz = transform.position.z;
+    //    }
+    //    else
+    //    {
+    //        platformPositionz = startPosition.z;
+    //    }
 
-        // Get final platform position where vectors xyz can either be moved or are fixed to the start position 
-        platformPosition = new Vector3(platformPositionx, platformPositiony, platformPositionz);
-    }
+    //    // Get final platform position where vectors xyz can either be moved or are fixed to the start position 
+    //    platformPosition = new Vector3(platformPositionx, platformPositiony, platformPositionz);
+    //}
 
     private void GetPlatformVelocity()
     {
-        platformVelocity = platformPosition;
+        platformVelocity = transform.position;
 
         if (axisX)
         {
             if (right)
             {
-                platformVelocity.x = platformPosition.x + speed * Time.deltaTime;
+                platformVelocity.x += speed * Time.deltaTime;
             }
             else
             {
-                platformVelocity.x = platformPosition.x + speed * Time.deltaTime;
+                platformVelocity.x -= speed * Time.deltaTime;
             }
         }
 
@@ -126,11 +129,11 @@ public class PlatformBehaviour : MonoBehaviour
         {
             if (up)
             {
-                platformVelocity.y = platformPosition.y + speed * Time.deltaTime;
+                platformVelocity.y += speed * Time.deltaTime;
             }
             else
             {
-                platformVelocity.y = platformPosition.y + speed * Time.deltaTime;
+                platformVelocity.y -= speed * Time.deltaTime;
             }
         }
 
@@ -138,12 +141,32 @@ public class PlatformBehaviour : MonoBehaviour
         {
             if (forwards)
             {
-                platformVelocity.z = platformPosition.z + speed * Time.deltaTime;
+                platformVelocity.z += speed * Time.deltaTime;
             }
             else
             {
-                platformVelocity.z = platformPosition.z + speed * Time.deltaTime;
+                platformVelocity.z -= speed * Time.deltaTime;
             }
+        }
+
+        transform.position = platformVelocity;
+    }
+
+    private void MovePlatform(bool inPositiveDirection)
+    {
+        platformVelocity = transform.position;
+
+        if (inPositiveDirection)
+        {
+            platformVelocity.x += speed * Time.deltaTime;
+            platformVelocity.z += speed * Time.deltaTime;
+            platformVelocity.y += speed * Time.deltaTime;
+        }
+        else
+        {
+            platformVelocity.x -= speed * Time.deltaTime;
+            platformVelocity.z -= speed * Time.deltaTime;
+            platformVelocity.y -= speed * Time.deltaTime;
         }
 
         transform.position = platformVelocity;
@@ -168,6 +191,8 @@ public class PlatformBehaviour : MonoBehaviour
                 {
                     changeDirection = false;
                 }
+
+                MovePlatform(!inPositiveDirection);
             }
             else if (endPosition[i] <= startPos[i])
             {
@@ -179,6 +204,8 @@ public class PlatformBehaviour : MonoBehaviour
                 {
                     changeDirection = false;
                 }
+
+                MovePlatform(inPositiveDirection);
             }
 
             if (changeDirection && !changeDirectionLast)
@@ -194,6 +221,6 @@ public class PlatformBehaviour : MonoBehaviour
             Debug.Log(i + "index");
         }
 
-        changeDirectionLast = changeDirection; // test
+        changeDirectionLast = changeDirection; 
     }
 }
