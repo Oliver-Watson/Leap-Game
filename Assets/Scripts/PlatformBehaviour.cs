@@ -194,6 +194,6 @@ public class PlatformBehaviour : MonoBehaviour
             Debug.Log(i + "index");
         }
 
-        changeDirectionLast = changeDirection;
+        changeDirectionLast = changeDirection; // test
     }
 }
