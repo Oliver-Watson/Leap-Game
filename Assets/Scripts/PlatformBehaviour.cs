@@ -29,7 +29,10 @@ public class PlatformBehaviour : MonoBehaviour
     [SerializeField] private float endPositionX;
     [SerializeField] private float endPositionY;
     [SerializeField] private float endPositionZ;
-    private float endPosition;
+    private Vector3 endPosition;
+
+    private Vector3 endDistance;
+    private Vector3 startDistance;
 
     [SerializeField] private bool axisX = false;
     [SerializeField] private bool axisY = false;
@@ -55,7 +58,8 @@ public class PlatformBehaviour : MonoBehaviour
         // If the player has fallen of the platform without jumping 
         if (PlayerMovement.coyoteTimeCounter < PlayerMovement.coyoteTime && !PlayerMovement.jumpedOffGround)
         {
-            HandleMovement();
+            // HandleMovement();
+            PlatPosition();
 
             Debug.Log("Platform move");
         }
@@ -63,6 +67,47 @@ public class PlatformBehaviour : MonoBehaviour
         {
             Debug.Log("Platform static");
         }
+    }
+
+    private void PlatPosition()
+    {
+        endPosition = new Vector3(endPositionX, endPositionY, endPositionZ);
+
+        endDistance = endPosition - startPosition;
+
+        Vector3 platVelocity = transform.position;
+
+        platVelocity.x += endDistance.normalized.x * speed * Time.deltaTime;
+
+        platVelocity.y += endDistance.normalized.y * speed * Time.deltaTime;
+
+        platVelocity.z += endDistance.normalized.z * speed * Time.deltaTime;
+
+        transform.position = platVelocity;
+
+        Vector3 platPosFromStart = transform.position - startPosition;
+        Vector3 platPosFromEnd = transform.position - endPosition;
+
+        if (platPosFromStart.magnitude >= endDistance.magnitude || platPosFromEnd.magnitude >= endDistance.magnitude)
+        {
+            changeDirection = true;
+            Debug.Log("Position from start" + platPosFromStart);
+            Debug.Log("Position from end" + platPosFromEnd);
+        }
+
+        else
+        {
+            changeDirection = false;
+        }
+
+
+        if (changeDirection && !changeDirectionLast)
+        {
+            speed *= direction;
+            Debug.Log("Change direction");
+        }
+
+        changeDirectionLast = changeDirection;
     }
 
     private void HandleMovement()
