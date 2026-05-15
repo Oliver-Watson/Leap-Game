@@ -14,9 +14,7 @@ public class LevelFinish : MonoBehaviour
 
     IEnumerator ToNextLevel()
     {
-        
         yield return new WaitForSeconds(2);
-        SceneManager.LoadScene(1);
-
+        SceneManager.LoadScene(LevelManager.currentLevel);
     }
 }
