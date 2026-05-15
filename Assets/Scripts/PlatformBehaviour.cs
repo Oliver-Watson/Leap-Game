@@ -9,6 +9,7 @@ using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.InputSystem.Utilities;
 using UnityEngine.UIElements;
+using static UnityEngine.Tilemaps.Tilemap;
 
 public class PlatformBehaviour : MonoBehaviour
 {
@@ -22,6 +23,7 @@ public class PlatformBehaviour : MonoBehaviour
 
     private bool changeDirectionLast = false;
 
+    private Vector3 startDirection;
     private Vector3 startPosition;
 
     private Vector3 platformVelocity;
@@ -37,7 +39,12 @@ public class PlatformBehaviour : MonoBehaviour
     {
         rb = GetComponent<Rigidbody>();
 
+        // Initialise start position
         startPosition = transform.position;
+
+
+        // Move this distance in the direction the platform is facing
+        moveAmount = (transform.right * moveDistanceX) + (transform.up * moveDistanceY) + (transform.forward * moveDistanceZ);
 
         //endPosition = transform.position.z + 10;
     }
@@ -50,10 +57,10 @@ public class PlatformBehaviour : MonoBehaviour
 
     private void PlatformMovement()
     {
-        // If the player has fallen of the platform without jumping 
+        // If the player has fallen off the platform without jumping 
         if (PlayerMovement.coyoteTimeCounter < PlayerMovement.coyoteTime && !PlayerMovement.jumpedOffGround)
         {
-            // HandleMovement();
+            // Move the platform
             HandleMovement();
 
             Debug.Log("Platform move");
@@ -66,9 +73,6 @@ public class PlatformBehaviour : MonoBehaviour
 
     private void HandleMovement()
     {
-        // Vector distance to be moved
-        moveAmount = new Vector3(moveDistanceX, moveDistanceY, moveDistanceZ);
-
         // Target vector point
         Vector3 targetPoint = startPosition + moveAmount;
 
@@ -78,24 +82,24 @@ public class PlatformBehaviour : MonoBehaviour
         // Initialising vector platVelocity as the transforms position
         Vector3 platVelocity = transform.position;
 
-        // Change platforms position by the speed multiplied by the normalised vector to change velocity in the direction from the start position to target end position
+        // Change platforms position by the speed multiplied by the normalised vector to move the platform in the direction of the start position to target end position
         platVelocity.x += endDistance.normalized.x * speed * Time.deltaTime;
 
         platVelocity.y += endDistance.normalized.y * speed * Time.deltaTime;
 
         platVelocity.z += endDistance.normalized.z * speed * Time.deltaTime;
 
-        // assign the platforms position back to the updated velocity
+        // Assign the platforms position back to the updated velocity
         transform.position = platVelocity;
 
         // Vector distance of platform position to start and end respectively
         Vector3 platPosFromStart = transform.position - startPosition;
         Vector3 platPosFromEnd = transform.position - targetPoint;
 
-        // If the platform position from the start exceeds the distance from the start the end
+        // If the platform position from the start exceeds the distance from the start or the end
         if (platPosFromStart.magnitude >= endDistance.magnitude || platPosFromEnd.magnitude >= endDistance.magnitude)
         {
-            // Change platform direction
+            // Change platform direction condition is true
             changeDirection = true;
             Debug.Log("Position from start" + platPosFromStart);
             Debug.Log("Position from end" + platPosFromEnd);
@@ -110,6 +114,7 @@ public class PlatformBehaviour : MonoBehaviour
         // If the change direction condition is true and was not true the last frame 
         if (changeDirection && !changeDirectionLast)
         {
+            // Change platform direction
             speed *= direction;
             Debug.Log("Change direction");
         }
