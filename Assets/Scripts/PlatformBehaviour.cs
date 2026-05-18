@@ -42,8 +42,7 @@ public class PlatformBehaviour : MonoBehaviour
         // Initialise start position
         startPosition = transform.position;
 
-
-        // Move this distance in the direction the platform is facing
+        // Move this vector distance in the direction the platform is facing
         moveAmount = (transform.right * moveDistanceX) + (transform.up * moveDistanceY) + (transform.forward * moveDistanceZ);
 
         //endPosition = transform.position.z + 10;
