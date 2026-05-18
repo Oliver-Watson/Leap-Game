@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using Unity.Mathematics;
 using Unity.VisualScripting;
 using UnityEditor.Experimental.GraphView;
@@ -10,20 +11,46 @@ using UnityEngine.Windows;
 
 public class PlayerMovement : MonoBehaviour
 {
+    [Header("Player Controls")]
     [SerializeField] private float jumpForce = 10f;
-    [SerializeField] private float dashForce = 2f;
-    private float currentDashForce;
-    // [SerializeField] private float dashReset = 2f;
+    [SerializeField] private float horizontalDashForce = 2f;
+    [SerializeField] private float verticalDashForce = 2f;
     [SerializeField] private float dashDrag = 2f;
-    public float speed = 5f;
-    public float groundDisplacement = 0.1f;
-
+    [SerializeField] private float dashTime = 0.5f;
+    [SerializeField] private float speed = 5f;
     [SerializeField] private float sensitivity;
+
+    [SerializeField] public static float coyoteTime = 4f;
+    [SerializeField] private float jumpBuffer = 0.2f;
+
+    [SerializeField] private bool normalisedDash;
+    [SerializeField] private bool multiDirectionalDash;
+    [SerializeField] private int allowedDash = 1;
+
+    [Header("References")]
     [SerializeField] private Transform orientation;
-    private float mouseX;
+    [SerializeField] private Transform groundCheck;
+    [SerializeField] private LayerMask groundMask;
+
+    // Dynamic jump buffering and coyote time variables
+    public static float coyoteTimeCounter;
+    private float jumpBufferCounter;
+
+    private Rigidbody rb;
+
+    private float currentHorDashForce;
+    private float currentVertDashForce;
+
+    private float targetMoveSpeed;
+    private float lastSpeedX;
+    private float lastSpeedZ;
+    private float momentumCarry;
+
+    // Ground Check
+    private float groundDisplacement = 0.1f;
+    public float groundDistance = 1f;
 
     private Vector2 moveAction;
-    private Vector2 mouseInput;
 
     private Vector3 moveDirection;
 
@@ -31,33 +58,18 @@ public class PlayerMovement : MonoBehaviour
     private Vector3 lastMoveDirection;
     private Vector3 dashVelocity;
 
-    [SerializeField] private bool normalisedDash;
-    [SerializeField] private bool multiDirectionalDash;
-
-    private Rigidbody rb;
-
-    [SerializeField] private Transform groundCheck;
-    [SerializeField] private LayerMask groundMask;
-    public float groundDistance = 1f;
-
     private bool isGrounded = false;
     public static bool hasJumped = false;
     public static bool jumpedOffGround = false;
     public static bool hasDashed = false;
+    private bool dashLastFrame = false;
+    private float lastHorDashForce;
 
-    [SerializeField] private int allowedDash = 1;
     private int dashCounter = 0;
 
     private bool dashCD = true;
     private bool wasGrounded = false;
-
-    public static float coyoteTime = 4f;
-    public static float coyoteTimeCounter;
-
-    private float jumpBuffer = 0.2f;
-    private float jumpBufferCounter;
-
-    [SerializeField] private float dashTime = 0.5f;
+    
     private float dashTimeCounter;
 
     private float min = -1f;
@@ -65,7 +77,8 @@ public class PlayerMovement : MonoBehaviour
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
-        currentDashForce = dashForce;
+        currentHorDashForce = horizontalDashForce;
+        currentVertDashForce = verticalDashForce;
     }
 
     private void Update()
@@ -78,86 +91,25 @@ public class PlayerMovement : MonoBehaviour
 
         HandleDashCondition();
 
-        Debug.Log(jumpBufferCounter + "Jump Buffer");
-        Debug.Log(coyoteTimeCounter + "Coyote Time");
-        Debug.Log(hasJumped + "Has Jumped");
-        Debug.Log("Dash Counter: " + dashTimeCounter);
-        Debug.Log("Dash Force: " + dashForce);
+        //dashTimeCounter -= Time.deltaTime;
+        //dashTimeCounter = Mathf.Max(dashTimeCounter, 0f);
+
+        Debug.Log("Changing speed momentum + last speed" + rb.linearVelocity.magnitude);
+        Debug.Log("Last speed" + momentumCarry);
+
+    }
+
+    public enum MovementState
+    {
+        walking,
+        dashing,
+        falling,
+        jumping
     }
 
     public void Move(InputAction.CallbackContext context)
     {
         moveAction = context.ReadValue<Vector2>();
-        Debug.Log(moveAction + "Press");
-    }
-
-    public void Jump(InputAction.CallbackContext context)
-    {
-        if (context.performed)
-        {
-            jumpBufferCounter = jumpBuffer;
-        }
-    }
-
-    public void Dash(InputAction.CallbackContext context)
-    {
-        if (context.performed)
-        {
-            //dashCounter++;
-
-            if (!hasDashed)
-            {
-                Debug.Log("Dash");
-
-                dashTimeCounter = dashTime;
-
-                GetDashDirection();
-            }
-        }
-    }
-
-    private void GetDashDirection()
-    {
-        if (multiDirectionalDash)
-        {
-            if (moveAction.y == 0 && moveAction.x == 0)
-            {
-                dashMoveDirection = orientation.forward;
-            }
-            else
-            {
-                dashMoveDirection = orientation.forward * moveAction.y + orientation.right * moveAction.x;
-            }
-        }
-
-        else if (normalisedDash)
-        {
-            dashMoveDirection = orientation.forward;
-        }
-    }
-
-    private void PerformDash()
-    {
-        //rb.linearVelocity = new Vector3(0f, rb.linearVelocity.y, rb.linearVelocity.z);
-
-        //rb.AddForce(orientation.forward * dashForce, ForceMode.Force);
-
-        Vector3 dashVelocity = rb.linearVelocity;
-        dashVelocity.x = dashMoveDirection.normalized.x * currentDashForce;
-        dashVelocity.z = dashMoveDirection.normalized.z * currentDashForce;
-        rb.linearVelocity = dashVelocity;
-        currentDashForce -= dashDrag * Time.deltaTime;
-        currentDashForce = Mathf.Max(currentDashForce, 0f);
-
-        //lastMoveDirection = moveDirection;
-    }
-
-    private void PerformJump()
-    {
-        rb.linearVelocity = new Vector3(rb.linearVelocity.x, jumpForce, rb.linearVelocity.z);
-
-        jumpBufferCounter = 0f;
-        coyoteTimeCounter = 0f;
     }
 
     private void HandleMoveInput()
@@ -171,6 +123,24 @@ public class PlayerMovement : MonoBehaviour
             rb.linearVelocity = velocity;
             Debug.Log("Move Direction: " + moveAction.y);
         }
+    }
+
+    public void Jump(InputAction.CallbackContext context)
+    {
+        if (context.performed)
+        {
+            jumpBufferCounter = jumpBuffer;
+        }
+    }
+
+    private void PerformJump()
+    {
+        Vector3 jump = rb.linearVelocity;
+        jump.y = jumpForce;
+        rb.linearVelocity = jump;
+
+        jumpBufferCounter = 0f;
+        coyoteTimeCounter = 0f;
     }
 
     private void HandleJumpCondition()
@@ -205,25 +175,182 @@ public class PlayerMovement : MonoBehaviour
         wasGrounded = isGrounded;
     }
 
+    public void Dash(InputAction.CallbackContext context)
+    {
+        if (context.performed)
+        {
+            //dashCounter++;
+
+            if (!hasDashed)
+            {
+                Debug.Log("Dash");
+
+                dashTimeCounter = dashTime;
+
+                GetDashDirection();
+
+                //StartCoroutine(nameof(HandleDash));
+            }
+        }
+    }
+
+    private void GetDashDirection()
+    {
+        if (multiDirectionalDash)
+        {
+            if (moveAction.y == 0 && moveAction.x == 0)
+            {
+                dashMoveDirection = orientation.forward;
+            }
+            else
+            {
+                dashMoveDirection = orientation.forward * moveAction.y + orientation.right * moveAction.x;
+            }
+        }
+
+        else if (normalisedDash)
+        {
+            dashMoveDirection = orientation.forward;
+        }
+    }
+
+    private void PerformDash()
+    {
+        dashVelocity = rb.linearVelocity;
+        dashVelocity.x = dashMoveDirection.x * currentHorDashForce;
+        dashVelocity.y = dashMoveDirection.y * currentVertDashForce;
+        dashVelocity.z = dashMoveDirection.z * currentHorDashForce;
+        //dashVelocity = dashMoveDirection.normalized * currentHorDashForce;
+
+        rb.linearVelocity = dashVelocity;
+
+        currentHorDashForce -= dashDrag * Time.deltaTime;
+        currentVertDashForce -= dashDrag * Time.deltaTime;
+
+        currentHorDashForce = Mathf.Max(currentHorDashForce, speed);
+        currentVertDashForce = Mathf.Max(currentVertDashForce, 0f);
+
+        //lastHorDashForce = currentHorDashForce;
+
+        //lastSpeedX = rb.linearVelocity.x;
+        //lastSpeedZ = rb.linearVelocity.z;
+
+        //momentumCarry = rb.linearVelocity.magnitude;
+
+        Debug.Log(currentHorDashForce + "Current dash force");
+        Debug.Log("Dashing");
+        Debug.Log("Dash Velocity" + rb.linearVelocity);
+        Debug.Log("Dash velocity magnitude" + rb.linearVelocity.magnitude);
+    }
+
     private void HandleDashCondition()
     {
+        float differenceHor = lastHorDashForce - currentHorDashForce;
+
         if (dashTimeCounter > 0)
         {
+            dashLastFrame = hasDashed;
+            lastHorDashForce = currentHorDashForce;
+
             PerformDash();
-            //dashForce = dashReset;
             hasDashed = true;
             //dashCounter++;
+            rb.useGravity = false;
+            
+        }
+        else if (dashTimeCounter > 0)
+        {
+            rb.useGravity = true;
+            //dashTimeCounter = 0f;
+            Debug.Log("Smooth momentum");
         }
         if (dashTimeCounter <= 0f && isGrounded)
         {
             hasDashed = false;
-            currentDashForce = dashForce;
+            currentHorDashForce = horizontalDashForce;
+            currentVertDashForce = verticalDashForce;
             dashCounter = 0;
         }
 
+        
+
+        Debug.Log("Difference " + differenceHor);
+
+        //currentHorDashForce -= dashDrag * Time.deltaTime;
+        //currentVertDashForce -= dashDrag * Time.deltaTime;
+
+        //currentHorDashForce = Mathf.Max(currentHorDashForce, speed);
+        //currentVertDashForce = Mathf.Max(currentVertDashForce, 0f);
+
         dashTimeCounter -= Time.deltaTime;
         dashTimeCounter = Mathf.Max(dashTimeCounter, 0f);
+
+        
     }
+
+    private void SmoothDashMomentum()
+    {
+
+    }
+
+    //private IEnumerator HandleDash()
+    //{
+    //    while (dashTimeCounter > 0)
+    //    {
+    //        PerformDash();
+    //        hasDashed = true;
+    //        //dashCounter++;
+    //        rb.useGravity = false;
+
+    //        dashTimeCounter -= Time.deltaTime;
+    //        dashTimeCounter = Mathf.Max(dashTimeCounter, 0f);
+
+    //        Debug.Log("Dash time " + dashTimeCounter);
+            
+
+    //        yield return null;
+    //    }
+
+    //    rb.useGravity = true;
+
+    //    if (dashTimeCounter <= 0f && isGrounded)
+    //    {
+    //        hasDashed = false;
+    //        currentHorDashForce = horizontalDashForce;
+    //        currentVertDashForce = verticalDashForce;
+    //        dashCounter = 0;
+    //    }
+
+    //    while (rb.linearVelocity.magnitude > 0f)
+    //    {
+    //        dashVelocity = rb.linearVelocity;
+    //        dashVelocity.x = dashMoveDirection.x * momentumCarry;
+    //        //dashVelocity.y = dashMoveDirection.y * currentVertDashForce;
+    //        dashVelocity.z = dashMoveDirection.z * momentumCarry;
+
+    //        rb.linearVelocity = dashVelocity;
+
+    //        //lastSpeedX -= Time.deltaTime * 10f;
+    //        //lastSpeedZ -= Time.deltaTime * 10f;
+
+    //        //lastSpeedX = Mathf.Max(lastSpeedX, 0f);
+    //        //lastSpeedZ = Mathf.Max(lastSpeedZ, 0f);
+
+    //        momentumCarry -= Time.deltaTime * 1f;
+
+    //        momentumCarry = Mathf.Max(momentumCarry, 0f);
+
+    //        Debug.Log("Changing speed momentum + last speed" + rb.linearVelocity.magnitude);
+    //        Debug.Log("Last speed" + momentumCarry);
+
+    //        yield return null;
+    //    }
+    //}
+
+    //private IEnumerator CarryMomentum()
+    //{
+        
+    //}
 
     public bool IsGrounded()
     {
