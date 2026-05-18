@@ -39,7 +39,9 @@ public class PlayerMovement : MonoBehaviour
     private Rigidbody rb;
 
     private float currentHorDashForce;
+    private float lastHorDashForce;
     private float currentVertDashForce;
+    //private float lastVertDashForce;
 
     private float targetMoveSpeed;
     private float lastSpeedX;
@@ -63,7 +65,7 @@ public class PlayerMovement : MonoBehaviour
     public static bool jumpedOffGround = false;
     public static bool hasDashed = false;
     private bool dashLastFrame = false;
-    private float lastHorDashForce;
+    
 
     private int dashCounter = 0;
 
@@ -80,6 +82,7 @@ public class PlayerMovement : MonoBehaviour
         currentHorDashForce = horizontalDashForce;
         currentVertDashForce = verticalDashForce;
         lastHorDashForce = currentHorDashForce;
+        //lastVertDashForce = currentVertDashForce;
     }
 
     private void Update()
@@ -154,17 +157,20 @@ public class PlayerMovement : MonoBehaviour
 
             hasJumped = false;
             jumpedOffGround = false;
+            Debug.Log("Was not grounded last frame and is grounded (jump condition)");
         }
         else if (!isGrounded)
         {
             coyoteTimeCounter -= Time.deltaTime;
             coyoteTimeCounter = Mathf.Max(coyoteTimeCounter, min);
+            Debug.Log("Not grounded (jump condition)");
         }
 
         if (!hasJumped && coyoteTimeCounter > 0 && jumpBufferCounter > 0)
         {
             PerformJump();
             hasJumped = true;
+            Debug.Log("Can jump");
 
             if (isGrounded)
             {
@@ -232,7 +238,7 @@ public class PlayerMovement : MonoBehaviour
         currentHorDashForce -= dashDrag * Time.deltaTime;
         currentVertDashForce -= dashDrag * Time.deltaTime;
 
-        currentHorDashForce = Mathf.Max(currentHorDashForce, speed);
+        currentHorDashForce = Mathf.Max(currentHorDashForce, 0f);
         currentVertDashForce = Mathf.Max(currentVertDashForce, 0f);
 
         //lastHorDashForce = currentHorDashForce;
@@ -251,8 +257,9 @@ public class PlayerMovement : MonoBehaviour
     private void HandleDashCondition()
     {
         float differenceHor = lastHorDashForce - currentHorDashForce;
+        //float differenceVert = lastVertDashForce = currentVertDashForce;
 
-        if (differenceHor != 0)
+        if (differenceHor != 0)// && differenceVert != 0)
         {
             dashLastFrame = hasDashed;
             lastHorDashForce = currentHorDashForce;
