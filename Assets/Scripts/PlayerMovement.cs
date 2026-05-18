@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using Unity.Mathematics;
-using Unity.VisualScripting;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -41,7 +40,7 @@ public class PlayerMovement : MonoBehaviour
     private float currentHorDashForce;
     private float lastHorDashForce;
     private float currentVertDashForce;
-    //private float lastVertDashForce;
+    private float lastVertDashForce;
 
     private float targetMoveSpeed;
     private float lastSpeedX;
@@ -82,7 +81,7 @@ public class PlayerMovement : MonoBehaviour
         currentHorDashForce = horizontalDashForce;
         currentVertDashForce = verticalDashForce;
         lastHorDashForce = currentHorDashForce;
-        //lastVertDashForce = currentVertDashForce;
+        lastVertDashForce = currentVertDashForce;
     }
 
     private void Update()
@@ -257,9 +256,9 @@ public class PlayerMovement : MonoBehaviour
     private void HandleDashCondition()
     {
         float differenceHor = lastHorDashForce - currentHorDashForce;
-        //float differenceVert = lastVertDashForce = currentVertDashForce;
+        float differenceVert = lastVertDashForce = currentVertDashForce;
 
-        if (differenceHor != 0)// && differenceVert != 0)
+        if (differenceHor != 0 && differenceVert != 0)
         {
             dashLastFrame = hasDashed;
             lastHorDashForce = currentHorDashForce;
