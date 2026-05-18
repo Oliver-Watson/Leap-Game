@@ -74,11 +74,12 @@ public class PlayerMovement : MonoBehaviour
 
     private float min = -1f;
 
-    private void Awake()
+    private void Start()
     {
         rb = GetComponent<Rigidbody>();
         currentHorDashForce = horizontalDashForce;
         currentVertDashForce = verticalDashForce;
+        lastHorDashForce = currentHorDashForce;
     }
 
     private void Update()
@@ -96,6 +97,8 @@ public class PlayerMovement : MonoBehaviour
 
         Debug.Log("Changing speed momentum + last speed" + rb.linearVelocity.magnitude);
         Debug.Log("Last speed" + momentumCarry);
+
+        Debug.Log("Use gravity? " + rb.useGravity);
 
     }
 
@@ -189,6 +192,8 @@ public class PlayerMovement : MonoBehaviour
 
                 GetDashDirection();
 
+                PerformDash();
+
                 //StartCoroutine(nameof(HandleDash));
             }
         }
@@ -247,7 +252,7 @@ public class PlayerMovement : MonoBehaviour
     {
         float differenceHor = lastHorDashForce - currentHorDashForce;
 
-        if (dashTimeCounter > 0)
+        if (differenceHor != 0)
         {
             dashLastFrame = hasDashed;
             lastHorDashForce = currentHorDashForce;
@@ -258,7 +263,7 @@ public class PlayerMovement : MonoBehaviour
             rb.useGravity = false;
             
         }
-        else if (dashTimeCounter > 0)
+        else
         {
             rb.useGravity = true;
             //dashTimeCounter = 0f;
@@ -272,85 +277,16 @@ public class PlayerMovement : MonoBehaviour
             dashCounter = 0;
         }
 
-        
-
         Debug.Log("Difference " + differenceHor);
-
-        //currentHorDashForce -= dashDrag * Time.deltaTime;
-        //currentVertDashForce -= dashDrag * Time.deltaTime;
-
-        //currentHorDashForce = Mathf.Max(currentHorDashForce, speed);
-        //currentVertDashForce = Mathf.Max(currentVertDashForce, 0f);
 
         dashTimeCounter -= Time.deltaTime;
         dashTimeCounter = Mathf.Max(dashTimeCounter, 0f);
-
-        
     }
 
     private void SmoothDashMomentum()
     {
 
     }
-
-    //private IEnumerator HandleDash()
-    //{
-    //    while (dashTimeCounter > 0)
-    //    {
-    //        PerformDash();
-    //        hasDashed = true;
-    //        //dashCounter++;
-    //        rb.useGravity = false;
-
-    //        dashTimeCounter -= Time.deltaTime;
-    //        dashTimeCounter = Mathf.Max(dashTimeCounter, 0f);
-
-    //        Debug.Log("Dash time " + dashTimeCounter);
-            
-
-    //        yield return null;
-    //    }
-
-    //    rb.useGravity = true;
-
-    //    if (dashTimeCounter <= 0f && isGrounded)
-    //    {
-    //        hasDashed = false;
-    //        currentHorDashForce = horizontalDashForce;
-    //        currentVertDashForce = verticalDashForce;
-    //        dashCounter = 0;
-    //    }
-
-    //    while (rb.linearVelocity.magnitude > 0f)
-    //    {
-    //        dashVelocity = rb.linearVelocity;
-    //        dashVelocity.x = dashMoveDirection.x * momentumCarry;
-    //        //dashVelocity.y = dashMoveDirection.y * currentVertDashForce;
-    //        dashVelocity.z = dashMoveDirection.z * momentumCarry;
-
-    //        rb.linearVelocity = dashVelocity;
-
-    //        //lastSpeedX -= Time.deltaTime * 10f;
-    //        //lastSpeedZ -= Time.deltaTime * 10f;
-
-    //        //lastSpeedX = Mathf.Max(lastSpeedX, 0f);
-    //        //lastSpeedZ = Mathf.Max(lastSpeedZ, 0f);
-
-    //        momentumCarry -= Time.deltaTime * 1f;
-
-    //        momentumCarry = Mathf.Max(momentumCarry, 0f);
-
-    //        Debug.Log("Changing speed momentum + last speed" + rb.linearVelocity.magnitude);
-    //        Debug.Log("Last speed" + momentumCarry);
-
-    //        yield return null;
-    //    }
-    //}
-
-    //private IEnumerator CarryMomentum()
-    //{
-        
-    //}
 
     public bool IsGrounded()
     {
