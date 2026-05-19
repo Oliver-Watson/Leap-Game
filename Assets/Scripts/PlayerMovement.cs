@@ -41,6 +41,7 @@ public class PlayerMovement : MonoBehaviour
     private float lastHorDashForce;
     private float currentVertDashForce;
     private float lastVertDashForce;
+    private Vector3 lastVelocity;
 
     private float targetMoveSpeed;
     private float lastSpeedX;
@@ -102,6 +103,8 @@ public class PlayerMovement : MonoBehaviour
 
         Debug.Log("Use gravity? " + rb.useGravity);
 
+        Debug.Log("Is grounded " + isGrounded);
+
     }
 
     public enum MovementState
@@ -150,32 +153,35 @@ public class PlayerMovement : MonoBehaviour
 
     private void HandleJumpCondition()
     {
-        if (isGrounded && !wasGrounded)
+        if (isGrounded && !wasGrounded || isGrounded && hasDashed)
         {
             coyoteTimeCounter = coyoteTime;
 
             hasJumped = false;
             jumpedOffGround = false;
-            Debug.Log("Was not grounded last frame and is grounded (jump condition)");
+            //Debug.Log("Was not grounded last frame and is grounded (jump condition)");
         }
         else if (!isGrounded)
         {
             coyoteTimeCounter -= Time.deltaTime;
             coyoteTimeCounter = Mathf.Max(coyoteTimeCounter, min);
-            Debug.Log("Not grounded (jump condition)");
+            //Debug.Log("Not grounded (jump condition)");
         }
 
         if (!hasJumped && coyoteTimeCounter > 0 && jumpBufferCounter > 0)
         {
             PerformJump();
             hasJumped = true;
-            Debug.Log("Can jump");
+            //Debug.Log("Can jump (jump condition");
 
             if (isGrounded)
             {
                 jumpedOffGround = true;
             }
         }
+
+        Debug.Log("Has jumped" + hasJumped);
+        Debug.Log("Was grounded " + wasGrounded);
 
         jumpBufferCounter -= Time.deltaTime;
         jumpBufferCounter = Mathf.Max(jumpBufferCounter, min);
@@ -226,6 +232,7 @@ public class PlayerMovement : MonoBehaviour
 
     private void PerformDash()
     {
+
         dashVelocity = rb.linearVelocity;
         dashVelocity.x = dashMoveDirection.x * currentHorDashForce;
         dashVelocity.y = dashMoveDirection.y * currentVertDashForce;
@@ -251,17 +258,23 @@ public class PlayerMovement : MonoBehaviour
         Debug.Log("Dashing");
         Debug.Log("Dash Velocity" + rb.linearVelocity);
         Debug.Log("Dash velocity magnitude" + rb.linearVelocity.magnitude);
+        Debug.Log("Dash velocity normalized" + dashMoveDirection.normalized * currentHorDashForce);
     }
 
     private void HandleDashCondition()
     {
-        float differenceHor = lastHorDashForce - currentHorDashForce;
-        float differenceVert = lastVertDashForce = currentVertDashForce;
+        //float differenceHor = lastHorDashForce - currentHorDashForce;
+        //float differenceVert = lastVertDashForce = currentVertDashForce;
 
-        if (differenceHor != 0 && differenceVert != 0)
+        Vector3 difference = lastVelocity - rb.linearVelocity;
+
+        if (difference.magnitude != 0 && dashTimeCounter > 0) 
         {
-            dashLastFrame = hasDashed;
-            lastHorDashForce = currentHorDashForce;
+            //dashLastFrame = hasDashed;
+            //lastHorDashForce = currentHorDashForce;
+            //lastVertDashForce = currentVertDashForce;
+
+            lastVelocity = rb.linearVelocity;
 
             PerformDash();
             hasDashed = true;
@@ -272,18 +285,22 @@ public class PlayerMovement : MonoBehaviour
         else
         {
             rb.useGravity = true;
-            //dashTimeCounter = 0f;
+            dashTimeCounter = 0f;
             Debug.Log("Smooth momentum");
         }
-        if (dashTimeCounter <= 0f && isGrounded)
+        if (difference.magnitude == 0 && isGrounded)
         {
             hasDashed = false;
             currentHorDashForce = horizontalDashForce;
             currentVertDashForce = verticalDashForce;
             dashCounter = 0;
+            Debug.Log("Dash reset");
         }
 
-        Debug.Log("Difference " + differenceHor);
+        Debug.Log("Difference " + difference);
+
+        Debug.Log("Last horizontal dash force " + lastHorDashForce);
+        Debug.Log("Current horizontal dash force " + currentHorDashForce);
 
         dashTimeCounter -= Time.deltaTime;
         dashTimeCounter = Mathf.Max(dashTimeCounter, 0f);
