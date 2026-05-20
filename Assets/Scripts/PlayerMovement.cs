@@ -18,6 +18,7 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float dashTime = 0.5f;
     [SerializeField] private float speed = 5f;
     [SerializeField] private float sensitivity;
+    [SerializeField] private float momentumCarryFactor;
 
     [SerializeField] public static float coyoteTime = 4f;
     [SerializeField] private float jumpBuffer = 0.2f;
@@ -43,9 +44,9 @@ public class PlayerMovement : MonoBehaviour
     private float lastVertDashForce;
     private Vector3 lastVelocity;
 
-    private float targetMoveSpeed;
-    private float lastSpeedX;
-    private float lastSpeedZ;
+    //private float targetMoveSpeed;
+    //private float lastSpeedX;
+    //private float lastSpeedZ;
     private float momentumCarry;
 
     // Ground Check
@@ -65,6 +66,7 @@ public class PlayerMovement : MonoBehaviour
     public static bool jumpedOffGround = false;
     public static bool hasDashed = false;
     private bool dashLastFrame = false;
+    private float smoothingTime = 1;
     
 
     private int dashCounter = 0;
@@ -126,7 +128,7 @@ public class PlayerMovement : MonoBehaviour
 
     private void HandleMoveInput()
     {
-        if (dashTimeCounter <= 0)
+        if (dashTimeCounter <= 0 && smoothingTime == 1)
         {
             moveDirection = orientation.forward * moveAction.y + orientation.right * moveAction.x;
             Vector3 velocity = rb.linearVelocity;
@@ -236,7 +238,6 @@ public class PlayerMovement : MonoBehaviour
 
     private void PerformDash()
     {
-
         dashVelocity = rb.linearVelocity;
         dashVelocity.x = dashMoveDirection.x * currentHorDashForce;
         dashVelocity.y = dashMoveDirection.y * currentVertDashForce;
@@ -298,9 +299,10 @@ public class PlayerMovement : MonoBehaviour
             dashTimeCounter = 0f;
             Debug.Log("Smooth momentum");
             Debug.Log("Last velocity " + dashMoveDirection.normalized * currentHorDashForce);
+            smoothingTime = 0;
             SmoothDashMomentum();
         }
-        if (difference.magnitude == 0 && isGrounded)
+        if (difference.magnitude == 0 && isGrounded && smoothingTime == 1)
         {
             hasDashed = false;
             currentHorDashForce = horizontalDashForce;
@@ -308,13 +310,15 @@ public class PlayerMovement : MonoBehaviour
             dashTimeCounter = 0;
             Debug.Log("Dash reset");
         }
+        if (smoothingTime < 1)
+        {
+            SmoothDashMomentum();
+        }
 
-        //Debug.Log("Difference " + difference);
+        Debug.Log("Difference " + difference);
 
         //Debug.Log("Last horizontal dash force " + lastHorDashForce);
         //Debug.Log("Current horizontal dash force " + currentHorDashForce);
-
-        
 
         dashTimeCounter -= Time.deltaTime;
         dashTimeCounter = Mathf.Max(dashTimeCounter, 0f);
@@ -323,10 +327,23 @@ public class PlayerMovement : MonoBehaviour
     private void SmoothDashMomentum()
     {
         Vector3 momentumVelocity = rb.linearVelocity;
-        momentumVelocity.x = dashMoveDirection.normalized.x * currentHorDashForce;
-        momentumVelocity.z = dashMoveDirection.normalized.z * currentHorDashForce;
+        momentumVelocity.x = dashMoveDirection.x * currentHorDashForce;
+        momentumVelocity.z = dashMoveDirection.z * currentHorDashForce;
         rb.linearVelocity = momentumVelocity;
         Debug.Log("Momentum velocity " + momentumVelocity);
+
+        if (currentHorDashForce > 0)
+        {
+            currentHorDashForce = Mathf.Lerp(currentHorDashForce, 0, smoothingTime);
+
+            smoothingTime += Time.deltaTime * momentumCarryFactor;
+
+            smoothingTime = Mathf.Min(smoothingTime, 1);
+
+            Debug.Log("Smoothing time (smoothing)" + smoothingTime);
+
+            Debug.Log("Current horizontal dash force (smoothing) " + currentHorDashForce);
+        }
     }
 
     public bool IsGrounded()
