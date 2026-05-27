@@ -33,7 +33,7 @@ public class PlayerCamera : MonoBehaviour
         rotationY -= mouseInput.y * sensitivity * Time.deltaTime;
         rotationY = Mathf.Clamp(rotationY, -90f, 90f);
 
-        orientation.rotation = Quaternion.Euler(0f, rotationX, 0f);
+        orientation.rotation = Quaternion.Euler(rotationY, rotationX, 0f);
         transform.rotation = Quaternion.Euler(rotationY, rotationX, 0f);
 
         Debug.Log("Mouse input: " + mouseInput.x);
