@@ -82,14 +82,14 @@ public class PlatformBehaviour : MonoBehaviour
         Vector3 platVelocity = transform.position;
 
         // Change platforms position by the speed multiplied by the normalised vector to move the platform in the direction of the start position to target end position
-        platVelocity.x += endDistance.normalized.x * speed * Time.deltaTime;
+        platVelocity.x = endDistance.normalized.x * speed * Time.deltaTime;
 
-        platVelocity.y += endDistance.normalized.y * speed * Time.deltaTime;
+        platVelocity.y = endDistance.normalized.y * speed * Time.deltaTime;
 
-        platVelocity.z += endDistance.normalized.z * speed * Time.deltaTime;
+        platVelocity.z = endDistance.normalized.z * speed * Time.deltaTime;
 
         // Assign the platforms position back to the updated velocity
-        transform.position = platVelocity;
+        transform.position += platVelocity;
 
         // Vector distance of platform position to start and end respectively
         Vector3 platPosFromStart = transform.position - startPosition;
