@@ -128,7 +128,7 @@ public class PlayerMovement : MonoBehaviour
 
     private void HandleMoveInput()
     {
-        if (dashTimeCounter <= 0 && smoothingTime == 1)
+        if (dashTimeCounter <= 0)
         {
             moveDirection = orientation.forward * moveAction.y + orientation.right * moveAction.x;
             Vector3 velocity = rb.linearVelocity;
@@ -276,7 +276,15 @@ public class PlayerMovement : MonoBehaviour
         lastHorDashForce = currentHorDashForce;
 
         // If player is still changing velocity and is within the allowed dash time
-        if (difference.magnitude != 0 && dashTimeCounter > 0) 
+        if (isGrounded)
+        {
+
+        }
+        else
+        {
+
+        }
+        if (difference.x + difference.z != 0 && dashTimeCounter > 0 || difference.y != 0 && dashTimeCounter > 0) 
         {
             //dashLastFrame = hasDashed;
             //lastHorDashForce = currentHorDashForce;
@@ -290,35 +298,31 @@ public class PlayerMovement : MonoBehaviour
             rb.useGravity = false;
             
         }
-
         // Else if player velocity has not changed since last frame 
-        else if (difference.magnitude == 0 && hasDashed)
+        else if (difference.x + difference.z == 0 && hasDashed || difference.y == 0 && hasDashed)
         {
             // End the dash and carry over momentum
+            hasDashed = false;
             rb.useGravity = true;
             dashTimeCounter = 0f;
-            Debug.Log("Smooth momentum");
-            Debug.Log("Last velocity " + dashMoveDirection.normalized * currentHorDashForce);
-            smoothingTime = 0;
-            SmoothDashMomentum();
-        }
-        if (difference.magnitude == 0 && isGrounded && smoothingTime == 1)
-        {
-            hasDashed = false;
             currentHorDashForce = horizontalDashForce;
             currentVertDashForce = verticalDashForce;
-            dashTimeCounter = 0;
-            Debug.Log("Dash reset");
+            Debug.Log("Smooth momentum");
+            Debug.Log("Last velocity " + dashMoveDirection.normalized * currentHorDashForce);
         }
-        if (smoothingTime < 1)
-        {
-            SmoothDashMomentum();
-        }
+        //if (difference.x + difference.z == 0 && isGrounded || difference.y == 0 && isGrounded)
+        //{
+        //    hasDashed = false;
+        //    currentHorDashForce = horizontalDashForce;
+        //    currentVertDashForce = verticalDashForce;
+        //    dashTimeCounter = 0;
+        //    Debug.Log("Dash reset");
+        //}
 
         Debug.Log("Difference " + difference);
 
-        //Debug.Log("Last horizontal dash force " + lastHorDashForce);
-        //Debug.Log("Current horizontal dash force " + currentHorDashForce);
+        Debug.Log("Current hor velocity - previous " + difference.x + difference.z);
+        Debug.Log("Current vert velocity - previous " + difference.y);
 
         dashTimeCounter -= Time.deltaTime;
         dashTimeCounter = Mathf.Max(dashTimeCounter, 0f);
