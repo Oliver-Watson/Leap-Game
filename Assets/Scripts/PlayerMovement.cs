@@ -49,10 +49,8 @@ public class PlayerMovement : MonoBehaviour
     private float lastVertDashForce;
     private Vector3 lastVelocity;
 
-    //private float targetMoveSpeed;
-    //private float lastSpeedX;
-    //private float lastSpeedZ;
-    private float momentumCarry;
+    // Carry dash momentum
+    private Vector3 momentumCarry;
 
     // Ground Check
     private float groundDisplacement = 0.1f;
@@ -70,10 +68,7 @@ public class PlayerMovement : MonoBehaviour
     public static bool hasJumped = false;
     public static bool jumpedOffGround = false;
     public static bool dashing = false;
-    private bool dashLastFrame = false;
-    private float smoothingTime = 1;
     
-
     private int dashCounter = 0;
 
     private bool dashCD = true;
@@ -312,6 +307,8 @@ public class PlayerMovement : MonoBehaviour
 
                 dashSmoothCounter = dashSmoothTime;
 
+                momentumCarry = rb.linearVelocity;
+
                 Vector3 resetVelocity = rb.linearVelocity;
                 resetVelocity = new Vector3(0, 0, 0);
                 rb.linearVelocity = resetVelocity;
@@ -321,7 +318,7 @@ public class PlayerMovement : MonoBehaviour
             }
         }
 
-        //HandleDashMomentum();
+        HandleDashMomentum();
 
         dashTimeCounter -= Time.deltaTime;
         dashTimeCounter = Mathf.Max(dashTimeCounter, 0f);
@@ -334,14 +331,14 @@ public class PlayerMovement : MonoBehaviour
 
     private void HandleDashMomentum()
     {
-        if (dashSmoothCounter > 0)
+        if (dashSmoothCounter > 0 && !isGrounded)
         {
-            Vector3 momentumVelocity = rb.linearVelocity;
-            momentumVelocity.x = dashMoveDirection.x * 5;
-            momentumVelocity.z = dashMoveDirection.z * 5;
-            rb.linearVelocity = momentumVelocity;
+            Vector3 carryOverVelocity = rb.linearVelocity;
+            carryOverVelocity.x = momentumCarry.x;
+            carryOverVelocity.z = momentumCarry.z;
+            rb.linearVelocity = carryOverVelocity;
 
-            Debug.Log("Momentum velocity " + momentumVelocity);
+            Debug.Log("Momentum velocity " + carryOverVelocity);
         }
 
         dashSmoothCounter -= Time.deltaTime;
