@@ -15,8 +15,12 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float jumpForce = 10f;
     [SerializeField] private float horizontalDashForce = 2f;
     [SerializeField] private float verticalDashForce = 2f;
+
     [SerializeField] private float dashDrag = 2f;
     [SerializeField] private float dashTime = 0.5f;
+
+    [SerializeField] private float dashSmoothTime = 2f;
+
     [SerializeField] private float speed = 5f;
     [SerializeField] private float sensitivity;
     [SerializeField] private float momentumCarryFactor;
@@ -76,6 +80,7 @@ public class PlayerMovement : MonoBehaviour
     private bool wasGrounded = false;
     
     private float dashTimeCounter;
+    private float dashSmoothCounter;
 
     private float min = -1f;
 
@@ -177,7 +182,7 @@ public class PlayerMovement : MonoBehaviour
             //Debug.Log("Not grounded (jump condition)");
         }
 
-        if (!hasJumped && coyoteTimeCounter > 0 && jumpBufferCounter > 0)
+        if (!hasJumped && coyoteTimeCounter > 0 && jumpBufferCounter > 0) // make work with jumping
         {
             PerformJump();
             hasJumped = true;
@@ -292,7 +297,7 @@ public class PlayerMovement : MonoBehaviour
         // If player was dashing last frame
         if (dashLast)
         {
-            // If speed has not changed since last frame 
+            // If player horizontal speed change has reached 0 or player has dashed off the ground and the vertical speed has reached 0 first
             if (difference.x + difference.z == 0 || difference.y == 0 && !isGrounded)
             {
                 // End the dash and carry over momentum
@@ -305,29 +310,42 @@ public class PlayerMovement : MonoBehaviour
                 currentHorDashForce = horizontalDashForce;
                 currentVertDashForce = verticalDashForce;
 
-                SmoothDashMomentum();
+                dashSmoothCounter = dashSmoothTime;
+
+                Vector3 resetVelocity = rb.linearVelocity;
+                resetVelocity = new Vector3(0, 0, 0);
+                rb.linearVelocity = resetVelocity;
+
                 Debug.Log("Smooth momentum");
                 Debug.Log("Last velocity " + dashMoveDirection.normalized * currentHorDashForce);
             }
         }
 
+        //HandleDashMomentum();
+
+        dashTimeCounter -= Time.deltaTime;
+        dashTimeCounter = Mathf.Max(dashTimeCounter, 0f);
+
         Debug.Log("Difference " + difference);
 
         Debug.Log("Previous hor velocity - current " + difference.x + difference.z);
         Debug.Log("Previous vert velocity - current " + difference.y);
-
-        dashTimeCounter -= Time.deltaTime;
-        dashTimeCounter = Mathf.Max(dashTimeCounter, 0f);
     }
 
-    private void SmoothDashMomentum()
+    private void HandleDashMomentum()
     {
-        Vector3 momentumVelocity = rb.linearVelocity;
-        momentumVelocity.x = dashMoveDirection.x * 5;
-        momentumVelocity.z = dashMoveDirection.z * 5;
-        rb.linearVelocity = momentumVelocity;
+        if (dashSmoothCounter > 0)
+        {
+            Vector3 momentumVelocity = rb.linearVelocity;
+            momentumVelocity.x = dashMoveDirection.x * 5;
+            momentumVelocity.z = dashMoveDirection.z * 5;
+            rb.linearVelocity = momentumVelocity;
 
-        Debug.Log("Momentum velocity " + momentumVelocity);
+            Debug.Log("Momentum velocity " + momentumVelocity);
+        }
+
+        dashSmoothCounter -= Time.deltaTime;
+        dashSmoothCounter = Mathf.Max(dashSmoothCounter, 0f);
 
         //if (currentHorDashForce > 0)
         //{
