@@ -137,7 +137,7 @@ public class PlayerMovement : MonoBehaviour
 
     private void HandleMoveInput()
     {
-        if (dashTimeCounter <= 0.0f)
+        if (!dashing)
         {
             moveDirection = orientation.forward * moveAction.y + orientation.right * moveAction.x;
 
@@ -280,7 +280,7 @@ public class PlayerMovement : MonoBehaviour
         Debug.Log("Dash velocity normalized" + dashMoveDirection.normalized * currentHorDashForce);
     }
 
-    private void HandleDashCondition() // unlimited dashes - fix
+    private void HandleDashCondition()
     {
         if (dashing)
         {
@@ -360,6 +360,8 @@ public class PlayerMovement : MonoBehaviour
 
         dashAllowed = AllowedDash();
 
+        Debug.Log("Dash allowed " + dashAllowed);
+
         Debug.Log("Difference " + difference);
 
         Debug.Log("Previous hor velocity - current " + difference.x + difference.z);
@@ -368,7 +370,7 @@ public class PlayerMovement : MonoBehaviour
 
     private void HandleDashMomentum()
     {
-        if (dashInterpolateTime < 1.0f)
+        if (dashInterpolateTime < 1.0f && !dashing)
         {
             moveDirection = orientation.forward * moveAction.y + orientation.right * moveAction.x;
 
