@@ -303,10 +303,6 @@ public class PlayerMovement : MonoBehaviour
 
             dashAllowed = false;
         }
-        else
-        {
-            dashAllowed = true;
-        }
         
 
         Vector3 difference = lastVelocity - rb.linearVelocity;
@@ -351,7 +347,9 @@ public class PlayerMovement : MonoBehaviour
                     Vector3 resetVelocity = rb.linearVelocity;
                     resetVelocity = new Vector3(momentumCarry.x, 0, momentumCarry.z);
                     rb.linearVelocity = resetVelocity;
+
                     dashInterpolateTime = 0.0f;
+
                     Debug.Log("Dash interploate time " + dashInterpolateTime);
                 }
                 else
