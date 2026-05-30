@@ -59,9 +59,10 @@ public class PlayerMovement : MonoBehaviour
     private float dashSmoothCounter;
 
     // Dash conditions
-    private bool jumpCancel = false;
+    private bool jumpCancelDash = false;
     private bool finishDash = true;
-    private bool dashAllowed = false;
+    private bool dashAllowed = true;
+    public static bool dashing = false;
 
     // Ground Check
     private float groundDisplacement = 0.1f;
@@ -78,7 +79,7 @@ public class PlayerMovement : MonoBehaviour
     private bool isGrounded = false;
     public static bool hasJumped = false;
     public static bool jumpedOffGround = false;
-    public static bool dashing = false;
+    
     
     private int dashCounter = 0;
 
@@ -173,7 +174,7 @@ public class PlayerMovement : MonoBehaviour
             coyoteTimeCounter = coyoteTime;
 
             hasJumped = false;
-            jumpCancel = false;
+            jumpCancelDash = false;
             jumpedOffGround = false;
             //Debug.Log("Was not grounded last frame and is grounded (jump condition)");
         }
@@ -191,7 +192,7 @@ public class PlayerMovement : MonoBehaviour
 
             if (dashing)
             {
-                jumpCancel = true;
+                jumpCancelDash = true;
             }
             
             //Debug.Log("Can jump (jump condition");
@@ -217,15 +218,17 @@ public class PlayerMovement : MonoBehaviour
         {
             //dashCounter++;
 
-            if (!dashing) // !dashing
+            if (dashAllowed) // !dashing
             {
                 Debug.Log("Dash");
 
-                dashTimeCounter = dashTime;
+                //dashTimeCounter = dashTime;
+
+                dashing = true;
 
                 GetDashDirection();
 
-                // PerformDash();
+                PerformDash();
 
                 //StartCoroutine(nameof(HandleDash));
             }
@@ -262,11 +265,7 @@ public class PlayerMovement : MonoBehaviour
 
         rb.linearVelocity = dashVelocity;
 
-        currentHorDashForce -= dashDrag * Time.deltaTime;
-        currentVertDashForce -= dashDrag * Time.deltaTime;
-
-        currentHorDashForce = Mathf.Max(currentHorDashForce, speed);
-        currentVertDashForce = Mathf.Max(currentVertDashForce, 0f);
+        
 
         //lastHorDashForce = currentHorDashForce;
 
@@ -287,6 +286,29 @@ public class PlayerMovement : MonoBehaviour
         //float differenceHor = lastHorDashForce - currentHorDashForce;
         //float differenceVert = lastVertDashForce = currentVertDashForce;
 
+
+        if (dashing && !jumpCancelDash)
+        {
+            currentHorDashForce -= dashDrag * Time.deltaTime;
+            currentVertDashForce -= dashDrag * Time.deltaTime;
+
+            currentHorDashForce = Mathf.Max(currentHorDashForce, speed);
+            currentVertDashForce = Mathf.Max(currentVertDashForce, 0f);
+
+            dashVelocity.x = dashMoveDirection.x * currentHorDashForce;
+            dashVelocity.y = dashMoveDirection.y * currentVertDashForce;
+            dashVelocity.z = dashMoveDirection.z * currentHorDashForce;
+
+            rb.linearVelocity = dashVelocity;
+
+            dashAllowed = false;
+        }
+        else
+        {
+            dashAllowed = true;
+        }
+        
+
         Vector3 difference = lastVelocity - rb.linearVelocity;
         lastVelocity = rb.linearVelocity;
         lastHorDashForce = currentHorDashForce;
@@ -294,13 +316,13 @@ public class PlayerMovement : MonoBehaviour
         // Check if dashing last frame
         bool dashLast = dashing;
 
-        if (dashTimeCounter > 0 && !jumpCancel)
-        {
-            PerformDash();
-            dashing = true;
-            //dashCounter++;
-            rb.useGravity = false;
-        }
+        //if (dashTimeCounter > 0 && !jumpCancel)
+        //{
+        //    PerformDash();
+        //    dashing = true;
+        //    //dashCounter++;
+        //    rb.useGravity = false;
+        //}
 
         // Only check next condition if player was dashing last frame
         if (dashLast)
@@ -324,7 +346,7 @@ public class PlayerMovement : MonoBehaviour
 
                 momentumCarry = rb.linearVelocity;
 
-                if (!jumpCancel)
+                if (!jumpCancelDash)
                 {
                     Vector3 resetVelocity = rb.linearVelocity;
                     resetVelocity = new Vector3(momentumCarry.x, 0, momentumCarry.z);
