@@ -60,7 +60,8 @@ public class PlayerMovement : MonoBehaviour
 
     // Dash conditions
     private bool jumpCancelDash = false;
-    private bool finishDash = true;
+    private bool resetDash = true;
+    private bool completeDash = true;
     private bool dashAllowed = true;
     public static bool dashing = false;
 
@@ -222,8 +223,6 @@ public class PlayerMovement : MonoBehaviour
             {
                 Debug.Log("Dash");
 
-                //dashTimeCounter = dashTime;
-
                 dashing = true;
 
                 GetDashDirection();
@@ -283,11 +282,7 @@ public class PlayerMovement : MonoBehaviour
 
     private void HandleDashCondition() // unlimited dashes - fix
     {
-        //float differenceHor = lastHorDashForce - currentHorDashForce;
-        //float differenceVert = lastVertDashForce = currentVertDashForce;
-
-
-        if (dashing && !jumpCancelDash)
+        if (dashing)
         {
             currentHorDashForce -= dashDrag * Time.deltaTime;
             currentVertDashForce -= dashDrag * Time.deltaTime;
@@ -301,9 +296,10 @@ public class PlayerMovement : MonoBehaviour
 
             rb.linearVelocity = dashVelocity;
 
-            dashAllowed = false;
+            completeDash = false;
+
+            //dashAllowed = false;
         }
-        
 
         Vector3 difference = lastVelocity - rb.linearVelocity;
         lastVelocity = rb.linearVelocity;
@@ -312,26 +308,18 @@ public class PlayerMovement : MonoBehaviour
         // Check if dashing last frame
         bool dashLast = dashing;
 
-        //if (dashTimeCounter > 0 && !jumpCancel)
-        //{
-        //    PerformDash();
-        //    dashing = true;
-        //    //dashCounter++;
-        //    rb.useGravity = false;
-        //}
-
         // Only check next condition if player was dashing last frame
         if (dashLast)
         {
             // If player horizontal speed change has reached 0 or player has dashed off the ground and the vertical speed has reached 0 
-            if (difference.x + difference.z == 0 || difference.y == 0 && !isGrounded)
+            if (difference.x + difference.z == 0 || difference.y == 0 && !isGrounded || jumpCancelDash)
             {
                 // End the dash and carry over momentum
-                dashing = false;
+                dashing = false; 
 
+                completeDash = true;
+                
                 rb.useGravity = true;
-
-                dashTimeCounter = 0f;
 
                 currentHorDashForce = horizontalDashForce;
                 currentVertDashForce = verticalDashForce;
@@ -365,14 +353,12 @@ public class PlayerMovement : MonoBehaviour
                 Debug.Log("Last velocity " + dashMoveDirection.normalized * currentHorDashForce);
             }
 
-            Debug.Log("Finish dash " + finishDash);
-
+            Debug.Log("Finish dash " + resetDash);
         }
 
         HandleDashMomentum();
 
-        dashTimeCounter -= Time.deltaTime;
-        dashTimeCounter = Mathf.Max(dashTimeCounter, 0f);
+        dashAllowed = AllowedDash();
 
         Debug.Log("Difference " + difference);
 
@@ -413,22 +399,24 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    private bool CheckCanDash() // multiple dashes
+    private bool AllowedDash() // multiple dashes
     {
-        if (dashInterpolateTime >= 1.0f)
+        if (completeDash)
         {
             if (isGrounded)
             {
-                return true;
-            }
-            else if (hasJumped)
-            {
-                return true;
+                resetDash = true;
+                completeDash = false;
             }
             else
             {
-                return false;
+                resetDash = false;
             }
+        }
+
+        if (resetDash)
+        {
+            return true;
         }
         else
         {
