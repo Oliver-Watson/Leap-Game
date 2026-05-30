@@ -20,7 +20,7 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float dashDrag = 2f;
     [SerializeField] private float dashTime = 0.5f;
 
-    [SerializeField] private float dashSmoothTime = 2f;
+    // [SerializeField] private float dashSmoothTime = 2f;
     [SerializeField] private float decelDashRate = 1.0f;
 
     [SerializeField] private float speed = 5f;
@@ -58,8 +58,10 @@ public class PlayerMovement : MonoBehaviour
     private float dashTimeCounter;
     private float dashSmoothCounter;
 
+    // Dash conditions
     private bool jumpCancel = false;
     private bool finishDash = true;
+    private bool dashAllowed = false;
 
     // Ground Check
     private float groundDisplacement = 0.1f;
@@ -215,7 +217,7 @@ public class PlayerMovement : MonoBehaviour
         {
             //dashCounter++;
 
-            if (!dashing)
+            if (!dashing) // !dashing
             {
                 Debug.Log("Dash");
 
@@ -250,7 +252,7 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    private void PerformDash()
+    private void PerformDash() // Move to dash input action?
     {
         dashVelocity = rb.linearVelocity;
         dashVelocity.x = dashMoveDirection.x * currentHorDashForce;
@@ -387,9 +389,30 @@ public class PlayerMovement : MonoBehaviour
 
             Debug.Log("Momentum velocity " + carryOverVelocity);
 
-            Debug.Log("Dash smooth counter " + dashSmoothCounter);
-            
-            
+            //Debug.Log("Dash smooth counter " + dashSmoothCounter);
+        }
+    }
+
+    private bool CheckCanDash() // multiple dashes
+    {
+        if (dashInterpolateTime >= 1.0f)
+        {
+            if (isGrounded)
+            {
+                return true;
+            }
+            else if (hasJumped)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else
+        {
+            return false;
         }
     }
 
