@@ -18,7 +18,7 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float verticalDashForce = 2f;
 
     [SerializeField] private float dashDrag = 2f;
-    [SerializeField] private float dashTime = 0.5f;
+    //[SerializeField] private float dashTime = 0.5f;
 
     // [SerializeField] private float dashSmoothTime = 2f;
     [SerializeField] private float decelDashRate = 1.0f;
@@ -383,7 +383,14 @@ public class PlayerMovement : MonoBehaviour
             carryOverVelocity.z = Mathf.Lerp(momentumCarry.z, 0.0f, dashInterpolateTime) + velocity.z;
             rb.linearVelocity = carryOverVelocity;
 
-            dashInterpolateTime += decelDashRate * Time.deltaTime;
+            if (!isGrounded)
+            {
+                dashInterpolateTime += decelDashRate * Time.deltaTime;
+            }
+            else
+            {
+                dashInterpolateTime += 2 * decelDashRate * Time.deltaTime;
+            }
 
             if (dashInterpolateTime >= 1.0f)
             {
