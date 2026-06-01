@@ -18,10 +18,8 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float verticalDashForce = 2f;
 
     [SerializeField] private float dashDrag = 2f;
-    //[SerializeField] private float dashTime = 0.5f;
-
-    // [SerializeField] private float dashSmoothTime = 2f;
     [SerializeField] private float decelDashRate = 1.0f;
+    [SerializeField] private float decelDashGroundFactor = 1.0f;
 
     [SerializeField] private float speed = 5f;
     [SerializeField] private float sensitivity;
@@ -170,6 +168,8 @@ public class PlayerMovement : MonoBehaviour
 
     private void HandleJumpCondition()
     {
+        //jumpCancelDash = false; // Why does this effect ability to jump
+
         if (isGrounded && !wasGrounded) //|| isGrounded && dashing
         {
             coyoteTimeCounter = coyoteTime;
@@ -183,6 +183,7 @@ public class PlayerMovement : MonoBehaviour
         {
             coyoteTimeCounter -= Time.deltaTime;
             coyoteTimeCounter = Mathf.Max(coyoteTimeCounter, min);
+            jumpCancelDash = false;
             //Debug.Log("Not grounded (jump condition)");
         }
 
@@ -195,8 +196,8 @@ public class PlayerMovement : MonoBehaviour
             {
                 jumpCancelDash = true;
             }
-            
-            //Debug.Log("Can jump (jump condition");
+
+            Debug.Log("Can jump (jump condition");
 
             if (isGrounded)
             {
@@ -204,8 +205,12 @@ public class PlayerMovement : MonoBehaviour
             }
         }
 
+        //jumpCancelDash = false;
+
         Debug.Log("Has jumped" + hasJumped);
         Debug.Log("Was grounded " + wasGrounded);
+        Debug.Log("Coyote time counter " + coyoteTimeCounter);
+        Debug.Log("Jump buffer counter " + jumpBufferCounter);
 
         jumpBufferCounter -= Time.deltaTime;
         jumpBufferCounter = Mathf.Max(jumpBufferCounter, min);
@@ -287,7 +292,7 @@ public class PlayerMovement : MonoBehaviour
             currentHorDashForce -= dashDrag * Time.deltaTime;
             currentVertDashForce -= dashDrag * Time.deltaTime;
 
-            currentHorDashForce = Mathf.Max(currentHorDashForce, speed);
+            currentHorDashForce = Mathf.Max(currentHorDashForce, speed); // final speed potentially tweek 
             currentVertDashForce = Mathf.Max(currentVertDashForce, 0f);
 
             dashVelocity.x = dashMoveDirection.x * currentHorDashForce;
@@ -298,8 +303,12 @@ public class PlayerMovement : MonoBehaviour
 
             completeDash = false;
 
+            Debug.Log("Dash Velocity" + rb.linearVelocity);
+
             //dashAllowed = false;
         }
+
+        Debug.Log("Dashing" + dashing);
 
         Vector3 difference = lastVelocity - rb.linearVelocity;
         lastVelocity = rb.linearVelocity;
@@ -364,6 +373,8 @@ public class PlayerMovement : MonoBehaviour
 
         Debug.Log("Difference " + difference);
 
+        Debug.Log("Jump cancel " + jumpCancelDash);
+
         Debug.Log("Previous hor velocity - current " + difference.x + difference.z);
         Debug.Log("Previous vert velocity - current " + difference.y);
     }
@@ -389,7 +400,7 @@ public class PlayerMovement : MonoBehaviour
             }
             else
             {
-                dashInterpolateTime += 2 * decelDashRate * Time.deltaTime;
+                dashInterpolateTime += decelDashGroundFactor * decelDashRate * Time.deltaTime;
             }
 
             if (dashInterpolateTime >= 1.0f)
