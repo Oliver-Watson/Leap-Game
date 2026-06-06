@@ -20,10 +20,13 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float dashDrag = 2f;
     [SerializeField] private float decelDashRate = 1.0f;
     [SerializeField] private float decelDashGroundFactor = 1.0f;
+    [SerializeField] private float decelMoveGroundFactor = 1.0f;
+    [SerializeField] private float momentumCarryFactor;
+    [SerializeField] private float forwardDragFactor;
 
     [SerializeField] private float speed = 5f;
+    [SerializeField] private float gravity = -9.8f;
     [SerializeField] private float sensitivity;
-    [SerializeField] private float momentumCarryFactor;
 
     [SerializeField] public static float coyoteTime = 4f;
     [SerializeField] private float jumpBuffer = 0.2f;
@@ -34,6 +37,7 @@ public class PlayerMovement : MonoBehaviour
 
     [Header("References")]
     [SerializeField] private Transform orientation;
+    [SerializeField] private Transform moveOrientation;
     [SerializeField] private Transform groundCheck;
     [SerializeField] private LayerMask groundMask;
 
@@ -56,6 +60,13 @@ public class PlayerMovement : MonoBehaviour
     private float dashTimeCounter;
     private float dashSmoothCounter;
 
+    // Carry move momentum
+    private Vector3 moveVelocityAtJump;
+    private float moveDragTime = 1.0f;
+    private bool moving = false;
+    private Vector3 lastMoveVelocity;
+    private Vector2 lastMoveDirection;
+
     // Dash conditions
     private bool jumpCancelDash = false;
     private bool resetDash = true;
@@ -67,12 +78,15 @@ public class PlayerMovement : MonoBehaviour
     private float groundDisplacement = 0.1f;
     public float groundDistance = 1f;
 
+    // Gravity 
+    private float gravityFactor;
+    private bool useGravity = true;
+
     private Vector2 moveAction;
 
     private Vector3 moveDirection;
 
     private Vector3 dashMoveDirection;
-    private Vector3 lastMoveDirection;
     private Vector3 dashVelocity;
 
     private bool isGrounded = false;
@@ -107,7 +121,10 @@ public class PlayerMovement : MonoBehaviour
 
         HandleDashCondition();
 
+        ApplyGravity();
+
         Debug.Log("Changing speed momentum + last speed" + rb.linearVelocity.magnitude);
+
         Debug.Log("Last speed" + momentumCarry);
 
         Debug.Log("Use gravity? " + rb.useGravity);
@@ -118,6 +135,26 @@ public class PlayerMovement : MonoBehaviour
 
         Debug.Log("Has dashed " + dashing);
 
+        Debug.Log("Use gravity " + useGravity);
+
+    }
+
+    private void ApplyGravity() // how to get clean gravity
+    {
+        Vector3 updateGravity = rb.linearVelocity;
+
+        if (useGravity && !isGrounded)
+        {
+            gravityFactor += gravity * Time.deltaTime;
+        }
+        else
+        {
+            gravityFactor = 0;
+        }
+
+        updateGravity.y += gravityFactor * Time.deltaTime;
+        updateGravity.y = Mathf.Max(updateGravity.y, gravity * 1.5f);
+        rb.linearVelocity = updateGravity;
     }
 
     public enum MovementState
@@ -131,18 +168,69 @@ public class PlayerMovement : MonoBehaviour
     public void Move(InputAction.CallbackContext context)
     {
         moveAction = context.ReadValue<Vector2>();
+
+        if (context.started)
+        {
+            Debug.Log("Move started (Move input action)");
+            moveDragTime = 1.0f;
+            moving = true;
+        }
+
+        else if (context.canceled)
+        {
+            Debug.Log("Move ended (Move input action");
+            moving = false;
+        }
     }
 
     private void HandleMoveInput()
     {
         if (!dashing)
         {
-            moveDirection = orientation.forward * moveAction.y + orientation.right * moveAction.x;
+            if (moving)
+            {
+                moveDirection = moveOrientation.forward * moveAction.y + moveOrientation.right * moveAction.x;
 
-            Vector3 velocity = rb.linearVelocity;
-            velocity.x = moveDirection.normalized.x * speed;
-            velocity.z = moveDirection.normalized.z * speed;
-            rb.linearVelocity = velocity;
+                Vector3 velocity = rb.linearVelocity;
+                velocity.x = moveDirection.x * speed;
+                velocity.z = moveDirection.z * speed;
+
+                rb.linearVelocity = velocity;
+
+                lastMoveVelocity = rb.linearVelocity;
+
+                lastMoveDirection = moveAction;
+            }
+
+            else
+            {
+                moveDirection = moveOrientation.forward * lastMoveDirection.y + moveOrientation.right * lastMoveDirection.x;
+
+                Vector3 velocity = rb.linearVelocity;
+                velocity.x = moveDirection.x * speed;
+                velocity.z = moveDirection.z * speed;
+
+                if (isGrounded && wasGrounded)
+                {
+                    moveDragTime -= forwardDragFactor * decelMoveGroundFactor * Time.deltaTime;
+                    moveDragTime = Mathf.Max(0.0f, moveDragTime);
+                }
+
+                else
+                {
+                    moveDragTime -= forwardDragFactor * Time.deltaTime;
+                    moveDragTime = Mathf.Max(0.0f, moveDragTime);
+                }
+
+                velocity.x = Mathf.Lerp(0.0f, velocity.x, moveDragTime);
+                velocity.z = Mathf.Lerp(0.0f, velocity.z, moveDragTime);
+
+                rb.linearVelocity = velocity;
+
+                Debug.Log("Drag movement");
+            }
+
+            Debug.Log("Forward drag time " + moveDragTime);
 
             Debug.Log("Move Direction: " + moveAction.y);
         }
@@ -152,18 +240,25 @@ public class PlayerMovement : MonoBehaviour
     {
         if (context.performed)
         {
+            moveVelocityAtJump = rb.linearVelocity;
             jumpBufferCounter = jumpBuffer;
+            gravityFactor = 0.0f;
         }
     }
 
     private void PerformJump()
     {
         Vector3 jump = rb.linearVelocity;
+
         jump.y = jumpForce;
         rb.linearVelocity = jump;
 
         jumpBufferCounter = 0f;
         coyoteTimeCounter = 0f;
+
+        Debug.Log("Last hor move (jump d)");
+        Debug.Log("Jump air drag time (jump d)" + moveDragTime);
+        Debug.Log("Grounded (jump d)" + isGrounded);
     }
 
     private void HandleJumpCondition()
@@ -205,6 +300,46 @@ public class PlayerMovement : MonoBehaviour
             }
         }
 
+        
+
+        //Vector3 jumpHorizontal = rb.linearVelocity;
+
+        //moveDirection = moveOrientation.forward * moveAction.y + moveOrientation.right * moveAction.x;
+
+        //Vector3 velocityHor = rb.linearVelocity;
+        //velocityHor.x = moveDirection.x * speed;
+        //velocityHor.z = moveDirection.z * speed;
+
+        //float moveVelocity = velocityHor.x + velocityHor.z;
+
+        //float horizontalMove = rb.linearVelocity.x + rb.linearVelocity.z;
+
+        //if (horizontalMove == moveVelocity && jumpAirDragTime >= 1.0f)
+        //{
+        //    Debug.Log("Jump drag");
+        //    jumpAirDragTime = 0.0f;
+        //}
+
+        //if (jumpAirDragTime < 1.0f && !isGrounded)
+        //{
+        //    moveDirection = moveOrientation.forward * moveAction.y + moveOrientation.right * moveAction.x;
+
+        //    Vector3 velocity = rb.linearVelocity;
+        //    velocity.x = moveDirection.x * speed;
+        //    velocity.z = moveDirection.z * speed;
+
+        //    jumpHorizontal.x = Mathf.Lerp(moveVelocityAtJump.x, 0, jumpAirDragTime) + velocity.x;
+        //    jumpHorizontal.z = Mathf.Lerp(moveVelocityAtJump.z, 0, jumpAirDragTime) + velocity.z;
+
+        //    jumpAirDragTime += forwardJumpDragFactor * Time.deltaTime;
+
+        //    rb.linearVelocity = jumpHorizontal;
+
+        //    Debug.Log("Hor jump vel" + jumpHorizontal.x);
+        //    Debug.Log("Velocity x " + velocity.x);
+        //    Debug.Log("Jump drag");
+        //}
+
         //jumpCancelDash = false;
 
         Debug.Log("Has jumped" + hasJumped);
@@ -233,6 +368,8 @@ public class PlayerMovement : MonoBehaviour
                 GetDashDirection();
 
                 PerformDash();
+
+                useGravity = false;
 
                 //StartCoroutine(nameof(HandleDash));
             }
@@ -327,8 +464,10 @@ public class PlayerMovement : MonoBehaviour
                 dashing = false; 
 
                 completeDash = true;
-                
-                rb.useGravity = true;
+
+                //rb.useGravity = true;
+
+                useGravity = true;
 
                 currentHorDashForce = horizontalDashForce;
                 currentVertDashForce = verticalDashForce;
