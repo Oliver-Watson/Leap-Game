@@ -129,7 +129,7 @@ public class PlayerMovement : MonoBehaviour
 
         ApplyGravity();
 
-        HandleMomentumCarryOver();
+        //HandleMomentumCarryOver();
 
         Debug.Log("Changing speed momentum + last speed" + rb.linearVelocity.magnitude);
 
@@ -173,80 +173,80 @@ public class PlayerMovement : MonoBehaviour
         jumping
     }
 
-    private void HandleMomentumCarryOver()
-    {
-        if (!dashing)
-        {
-            if (!moving)
-            {
-                moveDirection = moveOrientation.forward * lastMoveDirection.y + moveOrientation.right * lastMoveDirection.x;
+    //private void HandleMomentumCarryOver()
+    //{
+    //    if (!dashing)
+    //    {
+    //        if (!moving)
+    //        {
+    //            moveDirection = moveOrientation.forward * lastMoveDirection.y + moveOrientation.right * lastMoveDirection.x;
 
-                walkVelocity = rb.linearVelocity;
-                walkVelocity.x = moveDirection.x * speed;
-                walkVelocity.z = moveDirection.z * speed;
+    //            walkVelocity = rb.linearVelocity;
+    //            walkVelocity.x = moveDirection.x * speed;
+    //            walkVelocity.z = moveDirection.z * speed;
 
-                if (isGrounded && wasGrounded)
-                {
-                    moveDragTime -= forwardDragFactor * decelMoveGroundFactor * Time.deltaTime;
-                    moveDragTime = Mathf.Max(0.0f, moveDragTime);
-                }
+    //            if (isGrounded && wasGrounded)
+    //            {
+    //                moveDragTime -= forwardDragFactor * decelMoveGroundFactor * Time.deltaTime;
+    //                moveDragTime = Mathf.Max(0.0f, moveDragTime);
+    //            }
 
-                else
-                {
-                    moveDragTime -= forwardDragFactor * Time.deltaTime;
-                    moveDragTime = Mathf.Max(0.0f, moveDragTime);
-                }
+    //            else
+    //            {
+    //                moveDragTime -= forwardDragFactor * Time.deltaTime;
+    //                moveDragTime = Mathf.Max(0.0f, moveDragTime);
+    //            }
 
-                walkVelocity.x = Mathf.Lerp(0.0f, walkVelocity.x, moveDragTime);
-                walkVelocity.z = Mathf.Lerp(0.0f, walkVelocity.z, moveDragTime);
+    //            walkVelocity.x = Mathf.Lerp(0.0f, walkVelocity.x, moveDragTime);
+    //            walkVelocity.z = Mathf.Lerp(0.0f, walkVelocity.z, moveDragTime);
 
-                rb.linearVelocity = walkVelocity;
+    //            rb.linearVelocity = walkVelocity;
 
-                Debug.Log("Drag movement");
-            }
-        }
+    //            Debug.Log("Drag movement");
+    //        }
+    //    }
         
-        if (dashInterpolateTime < 1.0f && !dashing)
-        {
-            moveDirection = orientation.forward * moveAction.y + orientation.right * moveAction.x;
+    //    if (dashInterpolateTime < 1.0f && !dashing)
+    //    {
+    //        moveDirection = orientation.forward * moveAction.y + orientation.right * moveAction.x;
 
-            walkVelocity = rb.linearVelocity;
-            walkVelocity.x = moveDirection.normalized.x * speed;
-            walkVelocity.z = moveDirection.normalized.z * speed;
+    //        walkVelocity = rb.linearVelocity;
+    //        walkVelocity.x = moveDirection.normalized.x * speed;
+    //        walkVelocity.z = moveDirection.normalized.z * speed;
 
-            dashCarryOverVelocity = rb.linearVelocity;
-            dashCarryOverVelocity.x = Mathf.Lerp(momentumCarry.x, 0.0f, dashInterpolateTime) + walkVelocity.x;
-            dashCarryOverVelocity.z = Mathf.Lerp(momentumCarry.z, 0.0f, dashInterpolateTime) + walkVelocity.z;
+    //        dashCarryOverVelocity = rb.linearVelocity;
+    //        dashCarryOverVelocity.x = Mathf.Lerp(momentumCarry.x, 0.0f, dashInterpolateTime) + walkVelocity.x;
+    //        dashCarryOverVelocity.z = Mathf.Lerp(momentumCarry.z, 0.0f, dashInterpolateTime) + walkVelocity.z;
             
 
-            if (!isGrounded)
-            {
-                dashInterpolateTime += decelDashRate * Time.deltaTime;
-            }
-            else
-            {
-                dashInterpolateTime += decelDashGroundFactor * decelDashRate * Time.deltaTime;
-            }
+    //        if (!isGrounded)
+    //        {
+    //            dashInterpolateTime += decelDashRate * Time.deltaTime;
+    //        }
+    //        else
+    //        {
+    //            dashInterpolateTime += decelDashGroundFactor * decelDashRate * Time.deltaTime;
+    //        }
 
-            if (dashInterpolateTime >= 1.0f)
-            {
-                dashCarryOverVelocity = rb.linearVelocity;
-                dashCarryOverVelocity.x = 0.0f;
-                dashCarryOverVelocity.z = 0.0f;
-                //rb.linearVelocity = dashCarryOverVelocity;
-            }
+    //        if (dashInterpolateTime >= 1.0f)
+    //        {
+    //            dashCarryOverVelocity = rb.linearVelocity;
+    //            dashCarryOverVelocity.x = 0.0f;
+    //            dashCarryOverVelocity.z = 0.0f;
+    //            //rb.linearVelocity = dashCarryOverVelocity;
+    //        }
 
-            rb.linearVelocity = dashCarryOverVelocity;
+    //        rb.linearVelocity = dashCarryOverVelocity;
 
-            Debug.Log("Dash interploate time " + dashInterpolateTime);
+    //        Debug.Log("Dash interploate time " + dashInterpolateTime);
 
-            Debug.Log("Momentum velocity " + dashCarryOverVelocity);
+    //        Debug.Log("Momentum velocity " + dashCarryOverVelocity);
 
-            //Debug.Log("Dash smooth counter " + dashSmoothCounter);
-        }
+    //        //Debug.Log("Dash smooth counter " + dashSmoothCounter);
+    //    }
 
         
-    }
+    //}
 
     public void Move(InputAction.CallbackContext context)
     {
@@ -284,45 +284,45 @@ public class PlayerMovement : MonoBehaviour
 
                 lastMoveDirection = moveAction;
             }
-            //else
-            //{
-            //    //if (moveDragTime == 1.0f) // make public velocity variables, combine velocities 
-            //    //{
-            //    //    carryMomentum = true;
-            //    //}
-            //    //else
-            //    //{
-            //    //    carryMomentum = false;
-            //    //}
+            else
+            {
+                //if (moveDragTime == 1.0f) // make public velocity variables, combine velocities 
+                //{
+                //    carryMomentum = true;
+                //}
+                //else
+                //{
+                //    carryMomentum = false;
+                //}
 
-            //    moveDirection = moveOrientation.forward * lastMoveDirection.y + moveOrientation.right * lastMoveDirection.x;
+                moveDirection = moveOrientation.forward * lastMoveDirection.y + moveOrientation.right * lastMoveDirection.x;
 
-            //    walkVelocity = rb.linearVelocity;
-            //    walkVelocity.x = moveDirection.x * speed;
-            //    walkVelocity.z = moveDirection.z * speed;
+                walkVelocity = rb.linearVelocity;
+                walkVelocity.x = moveDirection.x * speed;
+                walkVelocity.z = moveDirection.z * speed;
 
-            //    if (isGrounded && wasGrounded)
-            //    {
-            //        moveDragTime -= forwardDragFactor * decelMoveGroundFactor * Time.deltaTime;
-            //        moveDragTime = Mathf.Max(0.0f, moveDragTime);
-            //    }
+                if (isGrounded && wasGrounded)
+                {
+                    moveDragTime -= forwardDragFactor * decelMoveGroundFactor * Time.deltaTime;
+                    moveDragTime = Mathf.Max(0.0f, moveDragTime);
+                }
 
-            //    else
-            //    {
-            //        moveDragTime -= forwardDragFactor * Time.deltaTime;
-            //        moveDragTime = Mathf.Max(0.0f, moveDragTime);
-            //    }
+                else
+                {
+                    moveDragTime -= forwardDragFactor * Time.deltaTime;
+                    moveDragTime = Mathf.Max(0.0f, moveDragTime);
+                }
 
-            //    //walkVelocity.x = Mathf.Lerp(0.0f, walkVelocity.x, moveDragTime);
-            //    //walkVelocity.z = Mathf.Lerp(0.0f, walkVelocity.z, moveDragTime);
+                //walkVelocity.x = Mathf.Lerp(0.0f, walkVelocity.x, moveDragTime);
+                //walkVelocity.z = Mathf.Lerp(0.0f, walkVelocity.z, moveDragTime);
 
-            //    //rb.linearVelocity = walkVelocity;
+                //rb.linearVelocity = walkVelocity;
 
-            //    Debug.Log("Drag movement");
-            //}
+                Debug.Log("Drag movement");
+            }
 
-            //walkVelocity.x = Mathf.Lerp(0.0f, walkVelocity.x, moveDragTime);
-            //walkVelocity.z = Mathf.Lerp(0.0f, walkVelocity.z, moveDragTime);
+            walkVelocity.x = Mathf.Lerp(0.0f, walkVelocity.x, moveDragTime);
+            walkVelocity.z = Mathf.Lerp(0.0f, walkVelocity.z, moveDragTime);
 
             rb.linearVelocity = walkVelocity;
 
@@ -556,7 +556,7 @@ public class PlayerMovement : MonoBehaviour
             Debug.Log("Finish dash " + resetDash);
         }
 
-        //HandleDashMomentum();
+        HandleDashMomentum();
 
         dashAllowed = AllowedDash();
 
