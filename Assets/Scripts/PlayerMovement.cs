@@ -67,7 +67,7 @@ public class PlayerMovement : MonoBehaviour
     private float momentumCarryV;
     private Vector3 dashMomentumDirection;
     private float dashInterpolateTime = 1.0f;
-    private bool carryMomentum = false;
+    private bool carryDashMomentum = false;
 
     private float dashTimeCounter;
     private float dashSmoothCounter;
@@ -77,7 +77,8 @@ public class PlayerMovement : MonoBehaviour
     private float moveDragTime = 1.0f;
     private bool moving = false;
     private Vector3 lastMoveVelocity;
-    private Vector2 lastMoveDirection;
+    private Vector2 lastMoveAction;
+    private bool movingLastFrame = false;
 
     // Dash conditions
     private bool jumpCancelDash = false;
@@ -160,7 +161,8 @@ public class PlayerMovement : MonoBehaviour
 
         if (useGravity && !isGrounded)
         {
-            gravityFactor += gravity * Time.deltaTime;
+            gravityFactor = gravity;// * Time.deltaTime;
+            //gravityFactor = Mathf.Max(gravityFactor, gravity * 2.0f);
         }
         else
         {
@@ -168,7 +170,7 @@ public class PlayerMovement : MonoBehaviour
         }
 
         updateGravity.y += gravityFactor * Time.deltaTime;
-        updateGravity.y = Mathf.Max(updateGravity.y, gravity * 0.8f);
+        //updateGravity.y = Mathf.Max(updateGravity.y, gravity * 0.8f);
         rb.linearVelocity = updateGravity;
     }
 
@@ -198,9 +200,9 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    private void HandleMoveInput() // event handler?
+    private void HandleMoveInput() 
     {
-        if (!dashing && !carryMomentum)
+        if (!dashing && !carryDashMomentum)
         {
             Debug.Log("Can move");
             if (moving)
@@ -213,13 +215,13 @@ public class PlayerMovement : MonoBehaviour
 
                 rb.linearVelocity = walkVelocity;
 
-                //lastMoveVelocity = rb.linearVelocity;
+                lastMoveVelocity = rb.linearVelocity;
 
-                lastMoveDirection = moveAction;
+                lastMoveAction = moveAction;
             }
             else
             {
-                //if (moveDragTime == 1.0f) // make public velocity variables, combine velocities 
+                //if (moveDragTime == 1.0f) // make public velocity variables, combine velocities // movingLastFrame
                 //{
                 //    carryMomentum = true;
                 //}
@@ -228,7 +230,7 @@ public class PlayerMovement : MonoBehaviour
                 //    carryMomentum = false;
                 //}
 
-                moveDirection = moveOrientation.forward * lastMoveDirection.y + moveOrientation.right * lastMoveDirection.x;
+                moveDirection = moveOrientation.forward * lastMoveAction.y + moveOrientation.right * lastMoveAction.x;
 
                 walkCarryOverVelocity = rb.linearVelocity;
                 walkCarryOverVelocity.x = moveDirection.x * speed;
@@ -292,8 +294,6 @@ public class PlayerMovement : MonoBehaviour
 
     private void HandleJumpCondition()
     {
-        //jumpCancelDash = false; // Why does this effect ability to jump
-
         if (isGrounded && !wasGrounded) //|| isGrounded && dashing
         {
             coyoteTimeCounter = coyoteTime;
@@ -319,6 +319,10 @@ public class PlayerMovement : MonoBehaviour
             if (dashing)
             {
                 jumpCancelDash = true;
+            }
+            if (carryDashMomentum)
+            {
+                dashInterpolateTime = 0.0f;
             }
 
             Debug.Log("Can jump (jump condition");
@@ -417,7 +421,7 @@ public class PlayerMovement : MonoBehaviour
             currentHorDashForce = Mathf.Max(currentHorDashForce, endHorizontalDashForce); 
             currentVertDashForce = Mathf.Max(currentVertDashForce, endVerticalDashForce);
 
-            dashVelocity.x = dashMoveDirection.x * currentHorDashForce; // Momentum carry velocity change assign to dash force rather than rb velocity, speed * moveAction
+            dashVelocity.x = dashMoveDirection.x * currentHorDashForce; 
             dashVelocity.y = dashMoveDirection.y * currentVertDashForce;
             dashVelocity.z = dashMoveDirection.z * currentHorDashForce;
 
@@ -454,7 +458,7 @@ public class PlayerMovement : MonoBehaviour
 
                 useGravity = true;
 
-                carryMomentum = true;
+                carryDashMomentum = true;
 
                 momentumCarryH = currentHorDashForce;
                 // momentumCarryV = currentVertDashForce; - Use if implementing vertical momentum carry
@@ -515,103 +519,18 @@ public class PlayerMovement : MonoBehaviour
 
     private void HandleDashMomentum()
     {
-        //if (carryMomentum)
-        //{
-        //    dashInterpolateTime = 1.0f;
-        //}
         moveDirection = moveOrientation.forward * moveAction.y + moveOrientation.right * moveAction.x;
 
         walkVelocity = rb.linearVelocity;
         walkVelocity.x = moveDirection.x * speed;
         walkVelocity.z = moveDirection.z * speed;
 
-        //dashCarryOverVelocity = rb.linearVelocity;
-        //dashCarryOverVelocity.x = (dashMomentumDirection.x * momentumCarryH) + walkVelocity.x;
-        //dashCarryOverVelocity.z = (dashMomentumDirection.z * momentumCarryH) + walkVelocity.z;
-
-        //rb.linearVelocity = dashCarryOverVelocity;
-
-        //momentumCarryH = Mathf.Lerp(momentumCarryH, 0.0f, dashInterpolateTime);
-        //momentumCarryH = Mathf.Lerp(momentumCarryH, 0.0f, dashInterpolateTime);
-
-        //float dashInterpolateTimeX = dashInterpolateTime * ((Mathf.Abs(momentumCarry.x + walkVelocity.x)) / Mathf.Abs(momentumCarry.x));
-        //float dashInterpolateTimeZ = dashInterpolateTime * ((Mathf.Abs(momentumCarry.z + walkVelocity.z)) / Mathf.Abs(momentumCarry.z));
-
-        //Debug.Log("dashInterpolateTimeX: " + dashInterpolateTimeX);
-
         dashCarryOverVelocity = rb.linearVelocity;
-        dashCarryOverVelocity.x = Mathf.Lerp(momentumCarry.x, 0.0f, dashInterpolateTime);// + walkVelocity.x;
+        dashCarryOverVelocity.x = Mathf.Lerp(momentumCarry.x, 0.0f, dashInterpolateTime); // + walkVelocity.x;
         //dashCarryOverVelocity.y = Mathf.Lerp(momentumCarry.y, 0.0f, dashInterpolateTime);
-        dashCarryOverVelocity.z = Mathf.Lerp(momentumCarry.z, 0.0f, dashInterpolateTime);// + walkVelocity.z;
+        dashCarryOverVelocity.z = Mathf.Lerp(momentumCarry.z, 0.0f, dashInterpolateTime); // + walkVelocity.z;
 
         rb.linearVelocity = dashCarryOverVelocity;
-
-        //momentumCarry = rb.linearVelocity;
-        
-        //if (dashMomentumDirection.z == 1 || dashMomentumDirection.z == 0)
-        //{
-        //    momentumCarry.x -= ((10.0f) * dashMomentumDirection.x) * Time.deltaTime;
-        //    momentumCarry.x = Mathf.Max(momentumCarry.x, 0.0f);
-        //    //dashCarryOverVelocity.y = Mathf.Lerp(momentumCarry.y, 0.0f, dashInterpolateTime);
-        //    momentumCarry.z -= ((10.0f) * dashMomentumDirection.z) * Time.deltaTime;
-        //    momentumCarry.z = Mathf.Max(momentumCarry.z, 0.0f);
-        //}
-        //else if (dashMomentumDirection.z == -1)
-        //{
-        //    momentumCarry.x += ((10.0f) * dashMomentumDirection.x) * Time.deltaTime;
-        //    momentumCarry.x = Mathf.Min(momentumCarry.x, 0.0f);
-        //    //dashCarryOverVelocity.y = Mathf.Lerp(momentumCarry.y, 0.0f, dashInterpolateTime);
-        //    momentumCarry.z += ((10.0f) * dashMomentumDirection.z) * Time.deltaTime;
-        //    momentumCarry.z = Mathf.Min(momentumCarry.z, 0.0f);
-        //}
-        
-
-        ////dashCarryOverVelocity = momentumCarry;
-
-        //rb.linearVelocity = momentumCarry;
-
-        // If the player has input movement
-        if (moveAction.y != 0)
-        {
-            // Change reference momentum carry velocity to the current player velocity to account for player going against momentum
-            //momentumCarry.x = dashCarryOverVelocity.x;
-            //momentumCarry.z = dashCarryOverVelocity.z;
-
-            //momentumCarry.x = Mathf.Max(momentumCarry.x, 0.0f);
-            //momentumCarry.z = Mathf.Max(momentumCarry.z, 0.0f);
-
-            //momentumCarry = rb.linearVelocity;
-
-            //dashInterpolateTime *= (dashCarryOverVelocity.x + walkVelocity.x) / walkVelocity.x;
-
-            //dashInterpolateTime = dashInterpolateTime * ((Mathf.Abs(momentumCarryH + speed)) / Mathf.Abs(momentumCarryH));
-
-            // dashInterpolateTime *= (speed + momentumCarryH) / momentumCarryH;
-
-            //if (moveAction.y == -1)
-            //{
-            //    momentumCarry = rb.linearVelocity;
-
-            //    momentumCarry.x -= ((10.0f + speed) * dashMomentumDirection.x) * Time.deltaTime;
-            //    //dashCarryOverVelocity.y = Mathf.Lerp(momentumCarry.y, 0.0f, dashInterpolateTime);
-            //    momentumCarry.z -= ((10.0f + speed) * dashMomentumDirection.z) * Time.deltaTime;
-
-            //    //dashCarryOverVelocity = momentumCarry;
-
-            //    rb.linearVelocity = momentumCarry;
-            //}
-            //momentumCarry = rb.linearVelocity;
-
-            //momentumCarry.x -= ((10.0f + walkVelocity.x) * dashMomentumDirection.x) * Time.deltaTime;
-            ////dashCarryOverVelocity.y = Mathf.Lerp(momentumCarry.y, 0.0f, dashInterpolateTime);
-            //momentumCarry.z -= ((10.0f + walkVelocity.z) * dashMomentumDirection.z) * Time.deltaTime;
-
-            ////dashCarryOverVelocity = momentumCarry;
-
-            //rb.linearVelocity = momentumCarry;
-
-            //Debug.Log("Going against momentum");
-        }
 
         if (!isGrounded)
         {
@@ -622,15 +541,11 @@ public class PlayerMovement : MonoBehaviour
             dashInterpolateTime += decelDashGroundFactor * decelDashRate * Time.deltaTime;
         }
 
-        // Check if velocity has reached 0 from player input opposite momentum
-        float currentVelocity = dashCarryOverVelocity.x + dashCarryOverVelocity.z;
-        Debug.Log("Current velocity (momentum) " + currentVelocity);
-
-        // If dash interpolate time has reached 1 or velocity has reached 0
+        // If dash interpolate time has reached 1
         if (dashInterpolateTime >= 1.0f)
         {
             // End momentum carry
-            carryMomentum = false;
+            carryDashMomentum = false;
             dashCarryOverVelocity = rb.linearVelocity;
             dashCarryOverVelocity.x = 0.0f;
             dashCarryOverVelocity.z = 0.0f;
@@ -642,7 +557,7 @@ public class PlayerMovement : MonoBehaviour
 
         Debug.Log("Momentum velocity " + dashCarryOverVelocity);
 
-        Debug.Log("Carry dash momentum " + carryMomentum);
+        Debug.Log("Carry dash momentum " + carryDashMomentum);
 
         //Debug.Log("Dash smooth counter " + dashSmoothCounter);
         
