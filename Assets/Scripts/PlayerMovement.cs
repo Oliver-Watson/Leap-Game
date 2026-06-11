@@ -601,18 +601,18 @@ public class PlayerMovement : MonoBehaviour
         //{
         //    dashInterpolateTime = 1.0f;
         //}
-        float desiredSpeed = 0.0f;
-        if (moveAction.y != 0 && desiredSpeed != momentumCarryH)
-        {
-            desiredSpeed = speed;
-        }
-        else
-        {
-            desiredSpeed = 0.0f;
-        }
-         //moveAction.y * speed;
-        float difference = Mathf.Abs(desiredSpeed - momentumCarryH);
-        Debug.Log("Difference: " + difference);
+        //float desiredSpeed = 0.0f;
+        //if (moveAction.y != 0 && desiredSpeed != momentumCarryH)
+        //{
+        //    desiredSpeed = speed;
+        //}
+        //else
+        //{
+        //    desiredSpeed = 0.0f;
+        //}
+        float desiredSpeed = moveAction.y * speed;
+        //float difference = Mathf.Abs(desiredSpeed - momentumCarryH);
+        //Debug.Log("Difference: " + difference);
 
         moveDirection = moveOrientation.forward * moveAction.y + moveOrientation.right * moveAction.x;
 
@@ -620,7 +620,7 @@ public class PlayerMovement : MonoBehaviour
         walkVelocity.x = moveDirection.x * speed;
         walkVelocity.z = moveDirection.z * speed;
 
-        momentumCarryH = Mathf.Lerp(momentumCarryH, desiredSpeed, dashInterpolateTime/difference); // change from time to speed ratio 
+        momentumCarryH = Mathf.Lerp(momentumCarryH, desiredSpeed, dashInterpolateTime); // change from time to speed ratio 
 
         dashCarryOverVelocity = rb.linearVelocity;
         dashCarryOverVelocity.x = (dashMomentumDirection.x * momentumCarryH) + walkVelocity.x;
