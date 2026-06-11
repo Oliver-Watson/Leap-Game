@@ -78,7 +78,7 @@ public class PlayerMovement : MonoBehaviour
     private bool moving = false;
     private Vector3 lastMoveVelocity;
     private Vector2 lastMoveAction;
-    private bool movingLastFrame = false;
+    private Vector2 lastDashInput;
 
     // Dash conditions
     private bool jumpCancelDash = false;
@@ -395,6 +395,13 @@ public class PlayerMovement : MonoBehaviour
         dashVelocity.z = dashMoveDirection.z * currentHorDashForce;
         //dashVelocity = dashMoveDirection.normalized * currentHorDashForce;
 
+        lastDashInput = moveAction;
+
+        if (moveAction.x == 0 || moveAction.y == 0)
+        {
+            lastDashInput.y = 1;
+        }
+
         rb.linearVelocity = dashVelocity;
 
         //lastHorDashForce = currentHorDashForce;
@@ -526,9 +533,9 @@ public class PlayerMovement : MonoBehaviour
         walkVelocity.z = moveDirection.z * speed;
 
         dashCarryOverVelocity = rb.linearVelocity;
-        dashCarryOverVelocity.x = Mathf.Lerp(momentumCarry.x, 0.0f, dashInterpolateTime); // + walkVelocity.x;
+        dashCarryOverVelocity.x = Mathf.Lerp(momentumCarry.x, 0.0f, dashInterpolateTime) + walkVelocity.x;
         //dashCarryOverVelocity.y = Mathf.Lerp(momentumCarry.y, 0.0f, dashInterpolateTime);
-        dashCarryOverVelocity.z = Mathf.Lerp(momentumCarry.z, 0.0f, dashInterpolateTime); // + walkVelocity.z;
+        dashCarryOverVelocity.z = Mathf.Lerp(momentumCarry.z, 0.0f, dashInterpolateTime) + walkVelocity.z;
 
         rb.linearVelocity = dashCarryOverVelocity;
 
@@ -539,6 +546,15 @@ public class PlayerMovement : MonoBehaviour
         else
         {
             dashInterpolateTime += decelDashGroundFactor * decelDashRate * Time.deltaTime;
+        }
+
+        Debug.Log("Momentum direction " + lastDashInput);
+
+        if (moveAction.x * lastDashInput.x == -1 || moveAction.y * lastDashInput.y == -1)
+        {
+            Debug.Log("Going against momentum fr");
+            dashInterpolateTime *= (momentumCarryH + speed) / momentumCarryH;
+            //dashInterpolateTime *= ((dashCarryOverVelocity.x + dashCarryOverVelocity.z) + (walkVelocity.x + walkVelocity.z)) / (dashCarryOverVelocity.x + dashCarryOverVelocity.z);
         }
 
         // If dash interpolate time has reached 1
