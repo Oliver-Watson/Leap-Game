@@ -168,17 +168,17 @@ public class PlayerMovement : MonoBehaviour
         }
 
         updateGravity.y += gravityFactor * Time.deltaTime;
-        updateGravity.y = Mathf.Max(updateGravity.y, gravity * 1.5f);
+        updateGravity.y = Mathf.Max(updateGravity.y, gravity * 1.2f);
         rb.linearVelocity = updateGravity;
     }
 
-    public enum MovementState
-    {
-        walking,
-        dashing,
-        falling,
-        jumping
-    }
+    //public enum MovementState
+    //{
+    //    walking,
+    //    dashing,
+    //    falling,
+    //    jumping
+    //}
 
     //private void HandleMomentumCarryOver()
     //{
@@ -534,14 +534,7 @@ public class PlayerMovement : MonoBehaviour
                 momentumCarryH = currentHorDashForce;
                 // momentumCarryV = currentVertDashForce; - Use if implementing vertical momentum carry
 
-                if (moveAction.y != 0)
-                {
-                    dashMomentumDirection = orientation.forward * moveAction.y;
-                }
-                else
-                {
-                    dashMomentumDirection = orientation.forward;
-                }
+                dashMomentumDirection = orientation.forward;
 
                 currentHorDashForce = horizontalDashForce;
                 currentVertDashForce = verticalDashForce;
@@ -601,40 +594,44 @@ public class PlayerMovement : MonoBehaviour
         //{
         //    dashInterpolateTime = 1.0f;
         //}
-        //float desiredSpeed = 0.0f;
-        //if (moveAction.y != 0 && desiredSpeed != momentumCarryH)
-        //{
-        //    desiredSpeed = speed;
-        //}
-        //else
-        //{
-        //    desiredSpeed = 0.0f;
-        //}
-        float desiredSpeed = moveAction.y * speed;
-        //float difference = Mathf.Abs(desiredSpeed - momentumCarryH);
-        //Debug.Log("Difference: " + difference);
-
         moveDirection = moveOrientation.forward * moveAction.y + moveOrientation.right * moveAction.x;
 
         walkVelocity = rb.linearVelocity;
         walkVelocity.x = moveDirection.x * speed;
         walkVelocity.z = moveDirection.z * speed;
 
-        momentumCarryH = Mathf.Lerp(momentumCarryH, desiredSpeed, dashInterpolateTime); // change from time to speed ratio 
+        //dashCarryOverVelocity = rb.linearVelocity;
+        //dashCarryOverVelocity.x = (dashMomentumDirection.x * momentumCarryH) + walkVelocity.x;
+        //dashCarryOverVelocity.z = (dashMomentumDirection.z * momentumCarryH) + walkVelocity.z;
+
+        //rb.linearVelocity = dashCarryOverVelocity;
+
+        //momentumCarryH = Mathf.Lerp(momentumCarryH, 0.0f, dashInterpolateTime);
+        //momentumCarryH = Mathf.Lerp(momentumCarryH, 0.0f, dashInterpolateTime);
+
+        //float dashInterpolateTimeX = dashInterpolateTime * ((Mathf.Abs(momentumCarry.x + walkVelocity.x)) / Mathf.Abs(momentumCarry.x));
+        //float dashInterpolateTimeZ = dashInterpolateTime * ((Mathf.Abs(momentumCarry.z + walkVelocity.z)) / Mathf.Abs(momentumCarry.z));
+
+        //Debug.Log("dashInterpolateTimeX: " + dashInterpolateTimeX);
 
         dashCarryOverVelocity = rb.linearVelocity;
-        dashCarryOverVelocity.x = (dashMomentumDirection.x * momentumCarryH) + walkVelocity.x;
-        dashCarryOverVelocity.z = (dashMomentumDirection.z * momentumCarryH) + walkVelocity.z;
-
+        dashCarryOverVelocity.x = Mathf.Lerp(momentumCarry.x, 0.0f, dashInterpolateTime) + walkVelocity.x;
+        dashCarryOverVelocity.z = Mathf.Lerp(momentumCarry.z, 0.0f, dashInterpolateTime) + walkVelocity.z;
         rb.linearVelocity = dashCarryOverVelocity;
 
-        
-        //momentumCarryH = Mathf.Lerp(momentumCarryH, desiredSpeed, dashInterpolateTime);
-
         // If the player has input movement
-        if (moveAction.y != 0)
+        if (moveAction.y == -1)
         {
             // Change reference momentum carry velocity to the current player velocity to account for player going against momentum
+            //momentumCarry.x = dashCarryOverVelocity.x;
+            //momentumCarry.z = dashCarryOverVelocity.z;
+
+            //momentumCarry.x = Mathf.Max(momentumCarry.x, 0.0f);
+            //momentumCarry.z = Mathf.Max(momentumCarry.z, 0.0f);
+
+            //momentumCarry = rb.linearVelocity;
+
+            //dashInterpolateTime *= (dashCarryOverVelocity.x + walkVelocity.x) / walkVelocity.x;
 
             //dashInterpolateTime = dashInterpolateTime * ((Mathf.Abs(momentumCarryH + speed)) / Mathf.Abs(momentumCarryH));
 
@@ -671,8 +668,6 @@ public class PlayerMovement : MonoBehaviour
         Debug.Log("Momentum velocity " + dashCarryOverVelocity);
 
         Debug.Log("Carry dash momentum " + carryMomentum);
-
-        Debug.Log("Momentum carryH: " + momentumCarryH);
 
         //Debug.Log("Dash smooth counter " + dashSmoothCounter);
         
