@@ -6,6 +6,7 @@ public class PlayerCamera : MonoBehaviour
 {
     [SerializeField] private float sensitivity;
     [SerializeField] private Transform orientation;
+    [SerializeField] private Transform moveOrientation;
     private Vector2 mouseInput;
     private float rotationX;
     private float rotationY;
@@ -35,7 +36,8 @@ public class PlayerCamera : MonoBehaviour
 
         orientation.rotation = Quaternion.Euler(rotationY, rotationX, 0f);
         transform.rotation = Quaternion.Euler(rotationY, rotationX, 0f);
+        moveOrientation.rotation = Quaternion.Euler(0f, rotationX, 0f); 
 
-        Debug.Log("Mouse input: " + mouseInput.x);
+        //Debug.Log("Mouse input: " + mouseInput.x);
     }
 }
