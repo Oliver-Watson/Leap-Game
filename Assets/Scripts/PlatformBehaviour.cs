@@ -62,11 +62,11 @@ public class PlatformBehaviour : MonoBehaviour
             // Move the platform
             HandleMovement();
 
-            Debug.Log("Platform move");
+            //Debug.Log("Platform move");
         }
         else
         {
-            Debug.Log("Platform static");
+            //Debug.Log("Platform static");
         }
     }
 
