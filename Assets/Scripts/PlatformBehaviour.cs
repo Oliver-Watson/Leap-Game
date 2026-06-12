@@ -100,8 +100,8 @@ public class PlatformBehaviour : MonoBehaviour
         {
             // Change platform direction condition is true
             changeDirection = true;
-            Debug.Log("Position from start" + platPosFromStart);
-            Debug.Log("Position from end" + platPosFromEnd);
+            //Debug.Log("Position from start" + platPosFromStart);
+            //Debug.Log("Position from end" + platPosFromEnd);
         }
 
         else
@@ -115,7 +115,7 @@ public class PlatformBehaviour : MonoBehaviour
         {
             // Change platform direction
             speed *= direction;
-            Debug.Log("Change direction");
+            //Debug.Log("Change direction");
         }
 
         // Avoid platform getting stuck on continuous change direction state
