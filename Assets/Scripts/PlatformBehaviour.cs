@@ -42,8 +42,7 @@ public class PlatformBehaviour : MonoBehaviour
         // Initialise start position
         startPosition = transform.position;
 
-
-        // Move this distance in the direction the platform is facing
+        // Move this vector distance in the direction the platform is facing
         moveAmount = (transform.right * moveDistanceX) + (transform.up * moveDistanceY) + (transform.forward * moveDistanceZ);
 
         //endPosition = transform.position.z + 10;
@@ -63,11 +62,11 @@ public class PlatformBehaviour : MonoBehaviour
             // Move the platform
             HandleMovement();
 
-            Debug.Log("Platform move");
+            //Debug.Log("Platform move");
         }
         else
         {
-            Debug.Log("Platform static");
+            //Debug.Log("Platform static");
         }
     }
 
@@ -83,14 +82,14 @@ public class PlatformBehaviour : MonoBehaviour
         Vector3 platVelocity = transform.position;
 
         // Change platforms position by the speed multiplied by the normalised vector to move the platform in the direction of the start position to target end position
-        platVelocity.x += endDistance.normalized.x * speed * Time.deltaTime;
+        platVelocity.x = endDistance.normalized.x * speed * Time.deltaTime;
 
-        platVelocity.y += endDistance.normalized.y * speed * Time.deltaTime;
+        platVelocity.y = endDistance.normalized.y * speed * Time.deltaTime;
 
-        platVelocity.z += endDistance.normalized.z * speed * Time.deltaTime;
+        platVelocity.z = endDistance.normalized.z * speed * Time.deltaTime;
 
         // Assign the platforms position back to the updated velocity
-        transform.position = platVelocity;
+        transform.position += platVelocity;
 
         // Vector distance of platform position to start and end respectively
         Vector3 platPosFromStart = transform.position - startPosition;
@@ -101,8 +100,8 @@ public class PlatformBehaviour : MonoBehaviour
         {
             // Change platform direction condition is true
             changeDirection = true;
-            Debug.Log("Position from start" + platPosFromStart);
-            Debug.Log("Position from end" + platPosFromEnd);
+            //Debug.Log("Position from start" + platPosFromStart);
+            //Debug.Log("Position from end" + platPosFromEnd);
         }
 
         else
@@ -116,7 +115,7 @@ public class PlatformBehaviour : MonoBehaviour
         {
             // Change platform direction
             speed *= direction;
-            Debug.Log("Change direction");
+            //Debug.Log("Change direction");
         }
 
         // Avoid platform getting stuck on continuous change direction state
