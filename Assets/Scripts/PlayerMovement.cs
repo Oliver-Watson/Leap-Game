@@ -12,27 +12,27 @@ using UnityEngine.Windows;
 
 public class PlayerMovement : MonoBehaviour
 {
-    [Header("Player Controls")]
+    [Header("Controls")]
     [SerializeField] private float jumpForce = 10f;
     [SerializeField] private float horizontalDashForce = 2f;
     [SerializeField] private float verticalDashForce = 2f;
-    [SerializeField] private float endHorizontalDashForce = 5.0f;
-    [SerializeField] private float endVerticalDashForce = 5.0f;
-
-    [SerializeField] private float dashDrag = 2f;
-    [SerializeField] private float decelDashRate = 1.0f;
-    [SerializeField] private float decelDashGroundFactor = 1.0f;
-    [SerializeField] private float decelMoveGroundFactor = 1.0f;
-    [SerializeField] private float momentumCarryFactor;
-    [SerializeField] private float forwardDragFactor;
 
     [SerializeField] private float speed = 5f;
     [SerializeField] private float gravity = -9.8f;
     [SerializeField] private float sensitivity;
+    [SerializeField] private float decelMoveGroundFactor = 1.0f;
 
     [SerializeField] public static float coyoteTime = 4f;
     [SerializeField] private float jumpBuffer = 0.2f;
 
+    [Header("Dashing")]
+    [SerializeField] private float dashDrag = 2f;
+    [SerializeField] private float decelDashRate = 1.0f;
+    [SerializeField] private float decelDashGroundFactor = 1.0f;
+    [SerializeField] private float momentumCarryFactor;
+    [SerializeField] private float forwardDragFactor;
+    [SerializeField] private float endHorizontalDashForce;
+    [SerializeField] private float endVerticalDashForce;
     [SerializeField] private bool normalisedDash;
     [SerializeField] private bool multiDirectionalDash;
     [SerializeField] private int allowedDash = 1;
@@ -48,6 +48,10 @@ public class PlayerMovement : MonoBehaviour
     private Vector3 dashVelocity;
     private Vector3 dashCarryOverVelocity;
     private Vector3 walkCarryOverVelocity;
+
+    private Vector2 moveAction;
+
+    private Vector3 moveDirection;
 
     // Dynamic jump buffering and coyote time variables
     public static float coyoteTimeCounter;
@@ -72,6 +76,8 @@ public class PlayerMovement : MonoBehaviour
     private float dashTimeCounter;
     private float dashSmoothCounter;
 
+    private Vector3 dashMoveDirection;
+
     // Carry move momentum
     private Vector3 moveVelocityAtJump;
     private float moveDragTime = 1.0f;
@@ -95,22 +101,11 @@ public class PlayerMovement : MonoBehaviour
     private float gravityFactor;
     private bool useGravity = true;
 
-    private Vector2 moveAction;
-
-    private Vector3 moveDirection;
-
-    private Vector3 dashMoveDirection;
-
     private bool isGrounded = false;
     public static bool hasJumped = false;
     public static bool jumpedOffGround = false;
-    
-    
-    private int dashCounter = 0;
 
-    private bool dashCD = true;
     private bool wasGrounded = false;
-
     private float min = -1f;
 
     private void Start()
@@ -137,32 +132,31 @@ public class PlayerMovement : MonoBehaviour
 
         //HandleMomentumCarryOver();
 
-        Debug.Log("Changing speed momentum + last speed" + rb.linearVelocity.magnitude);
+        //Debug.Log("Changing speed momentum + last speed" + rb.linearVelocity.magnitude);
 
-        Debug.Log("Last speed" + momentumCarry);
+        //Debug.Log("Last speed" + momentumCarry);
 
-        Debug.Log("Use gravity? " + rb.useGravity);
+        //Debug.Log("Use gravity? " + rb.useGravity);
 
-        Debug.Log("Is grounded " + isGrounded);
+        //Debug.Log("Is grounded " + isGrounded);
 
-        Debug.Log("Dash time counter " + dashTimeCounter);
+        //Debug.Log("Dash time counter " + dashTimeCounter);
 
-        Debug.Log("Has dashed " + dashing);
+        //Debug.Log("Has dashed " + dashing);
 
-        Debug.Log("Use gravity " + useGravity);
+        //Debug.Log("Use gravity " + useGravity);
 
-        Debug.Log("Velocity " + rb.linearVelocity);
+        //Debug.Log("Velocity " + rb.linearVelocity);
 
     }
 
-    private void ApplyGravity() // how to get clean gravity
+    private void ApplyGravity()
     {
         Vector3 updateGravity = rb.linearVelocity;
 
         if (useGravity && !isGrounded)
         {
-            gravityFactor = gravity;// * Time.deltaTime;
-            //gravityFactor = Mathf.Max(gravityFactor, gravity * 2.0f);
+            gravityFactor = gravity;
         }
         else
         {
@@ -170,17 +164,9 @@ public class PlayerMovement : MonoBehaviour
         }
 
         updateGravity.y += gravityFactor * Time.deltaTime;
-        //updateGravity.y = Mathf.Max(updateGravity.y, gravity * 0.8f);
+        updateGravity.y = Mathf.Max(updateGravity.y, gravity * 1.5f);
         rb.linearVelocity = updateGravity;
     }
-
-    //public enum MovementState
-    //{
-    //    walking,
-    //    dashing,
-    //    falling,
-    //    jumping
-    //}
 
     public void Move(InputAction.CallbackContext context)
     {
@@ -188,20 +174,21 @@ public class PlayerMovement : MonoBehaviour
 
         if (context.started)
         {
-            Debug.Log("Move started (Move input action)");
+            //Debug.Log("Move started (Move input action)");
             moveDragTime = 1.0f;
             moving = true;
         }
 
         else if (context.canceled)
         {
-            Debug.Log("Move ended (Move input action");
+            //Debug.Log("Move ended (Move input action");
             moving = false;
         }
     }
 
     private void HandleMoveInput() 
     {
+        // Only apply if both dash sequences are not taking place
         if (!dashing && !carryDashMomentum)
         {
             Debug.Log("Can move");
@@ -221,15 +208,6 @@ public class PlayerMovement : MonoBehaviour
             }
             else
             {
-                //if (moveDragTime == 1.0f) // make public velocity variables, combine velocities // movingLastFrame
-                //{
-                //    carryMomentum = true;
-                //}
-                //else
-                //{
-                //    carryMomentum = false;
-                //}
-
                 moveDirection = moveOrientation.forward * lastMoveAction.y + moveOrientation.right * lastMoveAction.x;
 
                 walkCarryOverVelocity = rb.linearVelocity;
@@ -253,17 +231,12 @@ public class PlayerMovement : MonoBehaviour
 
                 rb.linearVelocity = walkCarryOverVelocity;
 
-                Debug.Log("Drag movement");
+                //Debug.Log("Drag movement");
             }
 
-            //walkVelocity.x = Mathf.Lerp(0.0f, walkVelocity.x, moveDragTime);
-            //walkVelocity.z = Mathf.Lerp(0.0f, walkVelocity.z, moveDragTime);
+            //Debug.Log("Forward drag time " + moveDragTime);
 
-            //rb.linearVelocity = walkVelocity;
-
-            Debug.Log("Forward drag time " + moveDragTime);
-
-            Debug.Log("Move Direction: " + moveAction.y);
+            //Debug.Log("Move Direction: " + moveAction.y);
         }
     }
 
@@ -271,7 +244,7 @@ public class PlayerMovement : MonoBehaviour
     {
         if (context.performed)
         {
-            moveVelocityAtJump = rb.linearVelocity;
+            // Reset jump buffer
             jumpBufferCounter = jumpBuffer;
         }
     }
@@ -283,36 +256,43 @@ public class PlayerMovement : MonoBehaviour
         jump.y = jumpForce;
         rb.linearVelocity = jump;
 
+        // Player cannot jump until jump buffer and coyote time are reset 
         jumpBufferCounter = 0f;
         coyoteTimeCounter = 0f;
+
+        // Set gravity factor to 0 to avoid gravity absorbing jump velocity if jump was performed while falling
         gravityFactor = 0.0f;
 
-        Debug.Log("Last hor move (jump d)");
-        Debug.Log("Jump air drag time (jump d)" + moveDragTime);
-        Debug.Log("Grounded (jump d)" + isGrounded);
+        //Debug.Log("Last hor move (jump d)");
+        //Debug.Log("Jump air drag time (jump d)" + moveDragTime);
+        //Debug.Log("Grounded (jump d)" + isGrounded);
     }
 
     private void HandleJumpCondition()
     {
-        if (isGrounded && !wasGrounded) //|| isGrounded && dashing
+        // Check if grounded last frame to prevent jump reset
+        if (isGrounded && !wasGrounded) 
         {
+            // Reset coyote time 
             coyoteTimeCounter = coyoteTime;
 
             hasJumped = false;
             jumpCancelDash = false;
             jumpedOffGround = false;
-            //Debug.Log("Was not grounded last frame and is grounded (jump condition)");
         }
+        // If player is not grounded 
         else if (!isGrounded)
         {
+            // Countdown before player loses jump starts
             coyoteTimeCounter -= Time.deltaTime;
             coyoteTimeCounter = Mathf.Max(coyoteTimeCounter, min);
             jumpCancelDash = false;
-            //Debug.Log("Not grounded (jump condition)");
         }
 
+        // If all conditions are true
         if (!hasJumped && coyoteTimeCounter > 0 && jumpBufferCounter > 0) 
         {
+            // Carry out jump
             PerformJump();
             hasJumped = true;
 
@@ -325,7 +305,7 @@ public class PlayerMovement : MonoBehaviour
                 dashInterpolateTime = 0.0f;
             }
 
-            Debug.Log("Can jump (jump condition");
+            //Debug.Log("Can jump (jump condition");
 
             if (isGrounded)
             {
@@ -333,10 +313,10 @@ public class PlayerMovement : MonoBehaviour
             }
         }
 
-        Debug.Log("Has jumped" + hasJumped);
-        Debug.Log("Was grounded " + wasGrounded);
-        Debug.Log("Coyote time counter " + coyoteTimeCounter);
-        Debug.Log("Jump buffer counter " + jumpBufferCounter);
+        //Debug.Log("Has jumped" + hasJumped);
+        //Debug.Log("Was grounded " + wasGrounded);
+        //Debug.Log("Coyote time counter " + coyoteTimeCounter);
+        //Debug.Log("Jump buffer counter " + jumpBufferCounter);
 
         jumpBufferCounter -= Time.deltaTime;
         jumpBufferCounter = Mathf.Max(jumpBufferCounter, min);
@@ -346,23 +326,23 @@ public class PlayerMovement : MonoBehaviour
 
     public void Dash(InputAction.CallbackContext context)
     {
+        // If dash key is pressed 
         if (context.performed)
         {
-            //dashCounter++;
-
-            if (dashAllowed) // !dashing
+            // If dash is allowed 
+            if (dashAllowed) 
             {
-                Debug.Log("Dash");
+                //Debug.Log("Dash");
 
                 dashing = true;
 
+                // Get dash direction - called once this frame
                 GetDashDirection();
 
+                // Set initial dash velocity - called once this frame
                 PerformDash();
 
                 useGravity = false;
-
-                //StartCoroutine(nameof(HandleDash));
             }
         }
     }
@@ -389,44 +369,44 @@ public class PlayerMovement : MonoBehaviour
 
     private void PerformDash() 
     {
+        // Assign dash velocity
         dashVelocity = rb.linearVelocity;
         dashVelocity.x = dashMoveDirection.x * currentHorDashForce;
         dashVelocity.y = dashMoveDirection.y * currentVertDashForce;
         dashVelocity.z = dashMoveDirection.z * currentHorDashForce;
         //dashVelocity = dashMoveDirection.normalized * currentHorDashForce;
 
+        // Check which move input player made when performing dash to get the relative dash direction
         lastDashInput = moveAction;
 
-        if (moveAction.x == 0 || moveAction.y == 0)
+        // If no movement input is received 
+        if (moveAction.x == 0 && moveAction.y == 0)
         {
+            // Move input is taken as the forward input
             lastDashInput.y = 1;
         }
 
+        // Set initial dash velocity
         rb.linearVelocity = dashVelocity;
 
-        //lastHorDashForce = currentHorDashForce;
-
-        //lastSpeedX = rb.linearVelocity.x;
-        //lastSpeedZ = rb.linearVelocity.z;
-
-        //momentumCarry = rb.linearVelocity.magnitude;
-
-        Debug.Log(currentVertDashForce + "Current dash force");
-        Debug.Log("Dashing");
-        Debug.Log("Dash Velocity" + rb.linearVelocity);
-        Debug.Log("Dash velocity magnitude" + rb.linearVelocity.magnitude);
-        Debug.Log("Dash velocity normalized" + dashMoveDirection.normalized * currentHorDashForce);
+        //Debug.Log(currentVertDashForce + "Current dash force");
+        //Debug.Log("Dashing");
+        //Debug.Log("Dash Velocity" + rb.linearVelocity);
+        //Debug.Log("Dash velocity magnitude" + rb.linearVelocity.magnitude);
+        //Debug.Log("Dash velocity normalized" + dashMoveDirection.normalized * currentHorDashForce);
     }
 
     private void HandleDashCondition()
     {
+        // If the dash key was pressed and the player was allowed to dash dashing is set to true
         if (dashing)
         {
+            // Reduce the player dash velocity by the dash drag factor
             currentHorDashForce -= dashDrag * Time.deltaTime;
             currentVertDashForce -= dashDrag * Time.deltaTime;
 
-            currentHorDashForce = Mathf.Max(currentHorDashForce, endHorizontalDashForce); 
-            currentVertDashForce = Mathf.Max(currentVertDashForce, endVerticalDashForce);
+            currentHorDashForce = Mathf.Max(currentHorDashForce, speed); 
+            currentVertDashForce = Mathf.Max(currentVertDashForce, gravity);
 
             dashVelocity.x = dashMoveDirection.x * currentHorDashForce; 
             dashVelocity.y = dashMoveDirection.y * currentVertDashForce;
@@ -436,12 +416,12 @@ public class PlayerMovement : MonoBehaviour
 
             completeDash = false;
 
-            Debug.Log("Dash Velocity" + rb.linearVelocity);
+            //Debug.Log("Dash Velocity" + rb.linearVelocity);
 
             //dashAllowed = false;
         }
 
-        Debug.Log("Dashing" + dashing);
+        //Debug.Log("Dashing" + dashing);
 
         Vector3 difference = lastVelocity - rb.linearVelocity;
         lastVelocity = rb.linearVelocity;
@@ -461,12 +441,13 @@ public class PlayerMovement : MonoBehaviour
 
                 completeDash = true;
 
-                //rb.useGravity = true;
+                // rb.useGravity = true; - used if using unity gravity
 
                 useGravity = true;
 
                 carryDashMomentum = true;
 
+                
                 momentumCarryH = currentHorDashForce;
                 // momentumCarryV = currentVertDashForce; - Use if implementing vertical momentum carry
 
@@ -475,63 +456,70 @@ public class PlayerMovement : MonoBehaviour
                 currentHorDashForce = horizontalDashForce;
                 currentVertDashForce = verticalDashForce;
 
-                //dashSmoothCounter = dashSmoothTime;
-
-                //dashInterpolateTime = 0.0f;
-
+                // Get the current velocity to carry over momentum from
                 momentumCarry = rb.linearVelocity;
 
+                // If the dash ended from the negative acceleration reaching 0
                 if (!jumpCancelDash)
                 {
+                    // Set current velocity to the last velocity when dashing which will be carried over when handling the finished dash momentum
                     Vector3 resetVelocity = rb.linearVelocity;
                     resetVelocity = new Vector3(momentumCarry.x, momentumCarry.y, momentumCarry.z);
                     rb.linearVelocity = resetVelocity;
 
+                    // Dash interpolate time set to 0
                     dashInterpolateTime = 0.0f;
 
-                    Debug.Log("Dash interploate time " + dashInterpolateTime);
+                    //Debug.Log("Dash interploate time " + dashInterpolateTime);
                 }
+                // If the dash ended from the player using jump cancel
                 else
                 {
+                    // Set current velocity to the last velocity when dashing plus the jump force
                     Vector3 resetVelocity = rb.linearVelocity;
                     resetVelocity = new Vector3(momentumCarry.x, jumpForce, momentumCarry.z);
                     rb.linearVelocity = resetVelocity;
 
+                    // Dash interpolate time set to 0 
                     dashInterpolateTime = 0.0f;
                 }
 
-                Debug.Log("Smooth momentum");
-                Debug.Log("Last velocity " + dashMoveDirection.normalized * currentHorDashForce);
+                //Debug.Log("Smooth momentum");
+                //Debug.Log("Last velocity " + dashMoveDirection.normalized * currentHorDashForce);
             }
 
-            Debug.Log("Finish dash " + resetDash);
+            //Debug.Log("Finish dash " + resetDash);
         }
 
+        // If dash interpolate time is less than 1
         if (dashInterpolateTime < 1.0f && !dashing)
         {
+            // Carry over dash momentum
             HandleDashMomentum();
         }
 
         dashAllowed = AllowedDash();
 
-        Debug.Log("Dash allowed " + dashAllowed);
+        //Debug.Log("Dash allowed " + dashAllowed);
 
-        Debug.Log("Difference " + difference);
+        //Debug.Log("Difference " + difference);
 
-        Debug.Log("Jump cancel " + jumpCancelDash);
+        //Debug.Log("Jump cancel " + jumpCancelDash);
 
-        Debug.Log("Previous hor velocity - current " + difference.x + difference.z);
-        Debug.Log("Previous vert velocity - current " + difference.y);
+        //Debug.Log("Previous hor velocity - current " + difference.x + difference.z);
+        //Debug.Log("Previous vert velocity - current " + difference.y);
     }
 
     private void HandleDashMomentum()
     {
+        // Receive player movement input once again 
         moveDirection = moveOrientation.forward * moveAction.y + moveOrientation.right * moveAction.x;
 
-        walkVelocity = rb.linearVelocity;
+        //walkVelocity = rb.linearVelocity;
         walkVelocity.x = moveDirection.x * speed;
         walkVelocity.z = moveDirection.z * speed;
 
+        // Lerp dash carry over velocity to 0 whilst accounting for player input
         dashCarryOverVelocity = rb.linearVelocity;
         dashCarryOverVelocity.x = Mathf.Lerp(momentumCarry.x, 0.0f, dashInterpolateTime) + walkVelocity.x;
         //dashCarryOverVelocity.y = Mathf.Lerp(momentumCarry.y, 0.0f, dashInterpolateTime);
@@ -539,6 +527,7 @@ public class PlayerMovement : MonoBehaviour
 
         rb.linearVelocity = dashCarryOverVelocity;
 
+        // Increase dash interpolate time by different factors depending on whether in the air or grounded
         if (!isGrounded)
         {
             dashInterpolateTime += decelDashRate * Time.deltaTime;
@@ -548,13 +537,13 @@ public class PlayerMovement : MonoBehaviour
             dashInterpolateTime += decelDashGroundFactor * decelDashRate * Time.deltaTime;
         }
 
-        Debug.Log("Momentum direction " + lastDashInput);
+        //Debug.Log("Momentum direction " + lastDashInput);
 
+        // If previously received move input at dash is going against current direction -- 
         if (moveAction.x * lastDashInput.x == -1 || moveAction.y * lastDashInput.y == -1)
         {
-            Debug.Log("Going against momentum fr");
-            dashInterpolateTime *= (momentumCarryH + speed) / momentumCarryH;
-            //dashInterpolateTime *= ((dashCarryOverVelocity.x + dashCarryOverVelocity.z) + (walkVelocity.x + walkVelocity.z)) / (dashCarryOverVelocity.x + dashCarryOverVelocity.z);
+            // Increase the dash interpolate rate by a factor of the input speed to account for player going against momentum
+            dashInterpolateTime *= (momentumCarryH + (speed * 0.25f)) / momentumCarryH;
         }
 
         // If dash interpolate time has reached 1
@@ -562,6 +551,8 @@ public class PlayerMovement : MonoBehaviour
         {
             // End momentum carry
             carryDashMomentum = false;
+            //useGravity = true;
+
             dashCarryOverVelocity = rb.linearVelocity;
             dashCarryOverVelocity.x = 0.0f;
             dashCarryOverVelocity.z = 0.0f;
@@ -569,23 +560,26 @@ public class PlayerMovement : MonoBehaviour
             rb.linearVelocity = dashCarryOverVelocity + walkVelocity;
         }
 
-        Debug.Log("Dash interploate time " + dashInterpolateTime);
+        //Debug.Log("Dash interploate time " + dashInterpolateTime);
 
-        Debug.Log("Momentum velocity " + dashCarryOverVelocity);
+        //Debug.Log("Momentum velocity " + dashCarryOverVelocity);
 
-        Debug.Log("Carry dash momentum " + carryDashMomentum);
+        //Debug.Log("Carry dash momentum " + carryDashMomentum);
 
         //Debug.Log("Dash smooth counter " + dashSmoothCounter);
         
     }
 
-    private bool AllowedDash() // multiple dashes
+    private bool AllowedDash() 
     {
+        // If the player has completed the dash 
         if (completeDash)
         {
+            // Only reset the dash if the player is grounded
             if (isGrounded)
             {
                 resetDash = true;
+                // Complete dash is set to false
                 completeDash = false;
             }
             else
@@ -610,13 +604,13 @@ public class PlayerMovement : MonoBehaviour
 
         if (isGrounded)
         {
-            Debug.Log("Grounded");
+            //Debug.Log("Grounded");
             return true;
         }
 
         else
         {
-            Debug.Log("Not Grounded");
+            //Debug.Log("Not Grounded");
             return false;
         }
     }
@@ -626,6 +620,7 @@ public class PlayerMovement : MonoBehaviour
     {
         // Gizmos.DrawSphere(groundCheck.position, groundDistance);
         Gizmos.DrawRay(new Vector3(groundCheck.position.x,groundCheck.position.y + groundDistance, groundCheck.position.z), Vector3.down);
+        // Check direction dash should be facing
         Gizmos.DrawRay(new Vector3(groundCheck.position.x, groundCheck.position.y + groundDistance, groundCheck.position.z), dashMomentumDirection);
     }
 
