@@ -118,7 +118,7 @@ public class PlayerMovement : MonoBehaviour
         lastVertDashForce = currentVertDashForce;
     }
 
-    private void Update()
+    private void FixedUpdate()
     {
         HandleMoveInput();
 
@@ -163,7 +163,7 @@ public class PlayerMovement : MonoBehaviour
             gravityFactor = 0;
         }
 
-        updateGravity.y += gravityFactor * Time.deltaTime;
+        updateGravity.y += gravityFactor * Time.fixedDeltaTime;
         updateGravity.y = Mathf.Max(updateGravity.y, gravity * 1.5f);
         rb.linearVelocity = updateGravity;
     }
@@ -216,13 +216,13 @@ public class PlayerMovement : MonoBehaviour
 
                 if (isGrounded && wasGrounded)
                 {
-                    moveDragTime -= forwardDragFactor * decelMoveGroundFactor * Time.deltaTime;
+                    moveDragTime -= forwardDragFactor * decelMoveGroundFactor * Time.fixedDeltaTime;
                     moveDragTime = Mathf.Max(0.0f, moveDragTime);
                 }
 
                 else
                 {
-                    moveDragTime -= forwardDragFactor * Time.deltaTime;
+                    moveDragTime -= forwardDragFactor * Time.fixedDeltaTime;
                     moveDragTime = Mathf.Max(0.0f, moveDragTime);
                 }
 
@@ -284,7 +284,7 @@ public class PlayerMovement : MonoBehaviour
         else if (!isGrounded)
         {
             // Countdown before player loses jump starts
-            coyoteTimeCounter -= Time.deltaTime;
+            coyoteTimeCounter -= Time.fixedDeltaTime;
             coyoteTimeCounter = Mathf.Max(coyoteTimeCounter, min);
             jumpCancelDash = false;
         }
@@ -318,7 +318,7 @@ public class PlayerMovement : MonoBehaviour
         //Debug.Log("Coyote time counter " + coyoteTimeCounter);
         //Debug.Log("Jump buffer counter " + jumpBufferCounter);
 
-        jumpBufferCounter -= Time.deltaTime;
+        jumpBufferCounter -= Time.fixedDeltaTime;
         jumpBufferCounter = Mathf.Max(jumpBufferCounter, min);
 
         wasGrounded = isGrounded;
@@ -402,8 +402,8 @@ public class PlayerMovement : MonoBehaviour
         if (dashing)
         {
             // Reduce the player dash velocity by the dash drag factor
-            currentHorDashForce -= dashDrag * Time.deltaTime;
-            currentVertDashForce -= dashDrag * Time.deltaTime;
+            currentHorDashForce -= dashDrag * Time.fixedDeltaTime;
+            currentVertDashForce -= dashDrag * Time.fixedDeltaTime;
 
             currentHorDashForce = Mathf.Max(currentHorDashForce, speed); 
             currentVertDashForce = Mathf.Max(currentVertDashForce, gravity);
@@ -530,11 +530,11 @@ public class PlayerMovement : MonoBehaviour
         // Increase dash interpolate time by different factors depending on whether in the air or grounded
         if (!isGrounded)
         {
-            dashInterpolateTime += decelDashRate * Time.deltaTime;
+            dashInterpolateTime += decelDashRate * Time.fixedDeltaTime;
         }
         else
         {
-            dashInterpolateTime += decelDashGroundFactor * decelDashRate * Time.deltaTime;
+            dashInterpolateTime += decelDashGroundFactor * decelDashRate * Time.fixedDeltaTime;
         }
 
         //Debug.Log("Momentum direction " + lastDashInput);
