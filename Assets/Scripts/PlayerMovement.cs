@@ -72,9 +72,7 @@ public class PlayerMovement : MonoBehaviour
     private Vector3 dashMomentumDirection;
     private float dashInterpolateTime = 1.0f;
     private bool carryDashMomentum = false;
-
-    private float dashTimeCounter;
-    private float dashSmoothCounter;
+    private float dashDecayFloat = 0.25f;
 
     private Vector3 dashMoveDirection;
 
@@ -99,7 +97,9 @@ public class PlayerMovement : MonoBehaviour
 
     // Gravity 
     private float gravityFactor;
+    private Vector3 updateGravity;
     private bool useGravity = true;
+    private float gravityCap = 1.5f;
 
     private bool isGrounded = false;
     public static bool hasJumped = false;
@@ -133,7 +133,7 @@ public class PlayerMovement : MonoBehaviour
 
     private void ApplyGravity()
     {
-        Vector3 updateGravity = rb.linearVelocity;
+        updateGravity = rb.linearVelocity;
 
         if (useGravity && !isGrounded)
         {
@@ -145,7 +145,9 @@ public class PlayerMovement : MonoBehaviour
         }
 
         updateGravity.y += gravityFactor * Time.fixedDeltaTime;
-        updateGravity.y = Mathf.Max(updateGravity.y, gravity * 1.5f);
+
+        // Gravity capped as fall velocity can become too great during long air time
+        updateGravity.y = Mathf.Max(updateGravity.y, gravity * gravityCap);
         rb.linearVelocity = updateGravity;
     }
 
@@ -167,7 +169,12 @@ public class PlayerMovement : MonoBehaviour
 
     private void HandleMoveInput() 
     {
-        // Only apply if both dash sequences are not taking place
+        /// <summary>
+        /// Only applies movement logic if the dash state is not active 
+        /// If movement has been input during current frame, velocity is set in the normalised player direction plus input at the given speed
+        /// Movement input is taken from last frame to carry momentum shortly if player stops moving. Momentum carry changes depending on grounded state
+        /// </summary>
+
         if (!dashing && !carryDashMomentum)
         {
             if (moving)
@@ -208,8 +215,6 @@ public class PlayerMovement : MonoBehaviour
                 walkCarryOverVelocity.z = Mathf.Lerp(0.0f, walkVelocity.z, moveDragTime);
 
                 rb.linearVelocity = walkCarryOverVelocity;
-
-                //Debug.Log("Drag movement");
             }
         }
     }
@@ -240,7 +245,7 @@ public class PlayerMovement : MonoBehaviour
 
     private void HandleJumpCondition()
     {
-        // Check if grounded last frame to prevent jump reset
+        // Prevent being stuck on jump reset
         if (isGrounded && !wasGrounded) 
         {
             // Reset coyote time 
@@ -250,7 +255,6 @@ public class PlayerMovement : MonoBehaviour
             jumpCancelDash = false;
             jumpedOffGround = false;
         }
-        // If player is not grounded 
         else if (!isGrounded)
         {
             // Countdown before player loses jump starts
@@ -259,10 +263,8 @@ public class PlayerMovement : MonoBehaviour
             jumpCancelDash = false;
         }
 
-        // If all conditions are true
         if (!hasJumped && coyoteTimeCounter > 0 && jumpBufferCounter > 0) 
         {
-            // Carry out jump
             PerformJump();
             hasJumped = true;
 
@@ -275,8 +277,7 @@ public class PlayerMovement : MonoBehaviour
                 dashInterpolateTime = 0.0f;
             }
 
-            //Debug.Log("Can jump (jump condition");
-
+            // Accessed by platform script so platform will not move if air time is caused by player jumping off the ground
             if (isGrounded)
             {
                 jumpedOffGround = true;
@@ -289,22 +290,18 @@ public class PlayerMovement : MonoBehaviour
         wasGrounded = isGrounded;
     }
 
+    /// <summary>
+    /// Set the initial velocity and dash direction when dash key is input
+    /// </summary>
     public void Dash(InputAction.CallbackContext context)
     {
-        // If dash key is pressed 
         if (context.performed)
         {
-            // If dash is allowed 
             if (dashAllowed) 
             {
-                //Debug.Log("Dash");
-
                 dashing = true;
 
-                // Get dash direction - called once this frame
                 GetDashDirection();
-
-                // Set initial dash velocity - called once this frame
                 PerformDash();
 
                 useGravity = false;
@@ -350,16 +347,16 @@ public class PlayerMovement : MonoBehaviour
             lastDashInput.y = 1;
         }
 
-        // Set initial dash velocity
         rb.linearVelocity = dashVelocity;
     }
 
     private void HandleDashCondition()
     {
-        // If the dash key was pressed and the player was allowed to dash dashing is set to true
+        /// <summary>
+        /// After initial dash velocity is set, dash velocity decays over time each frame
+        /// </summary>
         if (dashing)
         {
-            // Reduce the player dash velocity by the dash drag factor
             currentHorDashForce -= dashDrag * Time.fixedDeltaTime;
             currentVertDashForce -= dashDrag * Time.fixedDeltaTime;
 
@@ -379,13 +376,15 @@ public class PlayerMovement : MonoBehaviour
         lastVelocity = rb.linearVelocity;
         lastHorDashForce = currentHorDashForce;
 
-        // Check if dashing last frame
+        // Prevents dash instantly being cancelled if the player was stationary 
         bool dashLast = dashing;
 
-        // Only check next condition if player was dashing last frame
         if (dashLast)
         {
-            // If player horizontal speed change has reached 0 or player has dashed off the ground and the vertical speed has reached 0 
+            /// <summary>
+            /// If horizontal or vertical speed difference has reached 0, or player has jump cancelled, the dash state ends
+            /// The current velocity is stored to carry over momentum
+            /// </summary>
             if (difference.x + difference.z == 0 || difference.y == 0 && !isGrounded || jumpCancelDash)
             {
                 // End the dash and carry over momentum
@@ -399,32 +398,24 @@ public class PlayerMovement : MonoBehaviour
 
                 carryDashMomentum = true;
 
-                
                 momentumCarryH = currentHorDashForce;
-                // momentumCarryV = currentVertDashForce; - Use if implementing vertical momentum carry
 
                 dashMomentumDirection = orientation.forward;
 
                 currentHorDashForce = horizontalDashForce;
                 currentVertDashForce = verticalDashForce;
 
-                // Get the current velocity to carry over momentum from
                 momentumCarry = rb.linearVelocity;
 
-                // If the dash ended from the negative acceleration reaching 0
                 if (!jumpCancelDash)
                 {
-                    // Set current velocity to the last velocity when dashing which will be carried over when handling the finished dash momentum
                     Vector3 resetVelocity = rb.linearVelocity;
                     resetVelocity = new Vector3(momentumCarry.x, momentumCarry.y, momentumCarry.z);
                     rb.linearVelocity = resetVelocity;
 
-                    // Dash interpolate time set to 0
                     dashInterpolateTime = 0.0f;
-
-                    //Debug.Log("Dash interploate time " + dashInterpolateTime);
                 }
-                // If the dash ended from the player using jump cancel
+
                 else
                 {
                     // Set current velocity to the last velocity when dashing plus the jump force
@@ -432,35 +423,33 @@ public class PlayerMovement : MonoBehaviour
                     resetVelocity = new Vector3(momentumCarry.x, jumpForce, momentumCarry.z);
                     rb.linearVelocity = resetVelocity;
 
-                    // Dash interpolate time set to 0 
                     dashInterpolateTime = 0.0f;
                 }
             }
         }
 
-        // If dash interpolate time is less than 1
+        // Only set to 0 when dash completes
         if (dashInterpolateTime < 1.0f && !dashing)
         {
-            // Carry over dash momentum
             HandleDashMomentum();
         }
 
         dashAllowed = AllowedDash();
     }
 
+    /// <summary>
+    /// Smoothly lerp dash velocity while accounting for player move input
+    /// Dash decays faster if player is moving against momentum
+    /// </summary>
     private void HandleDashMomentum()
     {
-        // Receive player movement input once again 
         moveDirection = moveOrientation.forward * moveAction.y + moveOrientation.right * moveAction.x;
 
-        //walkVelocity = rb.linearVelocity;
         walkVelocity.x = moveDirection.x * speed;
         walkVelocity.z = moveDirection.z * speed;
 
-        // Lerp dash carry over velocity to 0 whilst accounting for player input
         dashCarryOverVelocity = rb.linearVelocity;
         dashCarryOverVelocity.x = Mathf.Lerp(momentumCarry.x, 0.0f, dashInterpolateTime) + walkVelocity.x;
-        //dashCarryOverVelocity.y = Mathf.Lerp(momentumCarry.y, 0.0f, dashInterpolateTime);
         dashCarryOverVelocity.z = Mathf.Lerp(momentumCarry.z, 0.0f, dashInterpolateTime) + walkVelocity.z;
 
         rb.linearVelocity = dashCarryOverVelocity;
@@ -475,21 +464,15 @@ public class PlayerMovement : MonoBehaviour
             dashInterpolateTime += decelDashGroundFactor * decelDashRate * Time.fixedDeltaTime;
         }
 
-        //Debug.Log("Momentum direction " + lastDashInput);
-
-        // If previously received move input at dash is going against current direction -- 
+        // If previously received move input at dash is going against current direction
         if (moveAction.x * lastDashInput.x == -1 || moveAction.y * lastDashInput.y == -1)
         {
-            // Increase the dash interpolate rate by a factor of the input speed to account for player going against momentum
-            dashInterpolateTime *= (momentumCarryH + (speed * 0.25f)) / momentumCarryH;
+            dashInterpolateTime *= (momentumCarryH + (speed * dashDecayFloat)) / momentumCarryH;
         }
 
-        // If dash interpolate time has reached 1
         if (dashInterpolateTime >= 1.0f)
         {
-            // End momentum carry
             carryDashMomentum = false;
-            //useGravity = true;
 
             dashCarryOverVelocity = rb.linearVelocity;
             dashCarryOverVelocity.x = 0.0f;
@@ -499,16 +482,14 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
+    // Dash condition
     private bool AllowedDash() 
     {
-        // If the player has completed the dash 
         if (completeDash)
         {
-            // Only reset the dash if the player is grounded
             if (isGrounded)
             {
                 resetDash = true;
-                // Complete dash is set to false
                 completeDash = false;
             }
             else
