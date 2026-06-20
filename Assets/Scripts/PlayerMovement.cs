@@ -129,25 +129,6 @@ public class PlayerMovement : MonoBehaviour
         HandleDashCondition();
 
         ApplyGravity();
-
-        //HandleMomentumCarryOver();
-
-        //Debug.Log("Changing speed momentum + last speed" + rb.linearVelocity.magnitude);
-
-        //Debug.Log("Last speed" + momentumCarry);
-
-        //Debug.Log("Use gravity? " + rb.useGravity);
-
-        //Debug.Log("Is grounded " + isGrounded);
-
-        //Debug.Log("Dash time counter " + dashTimeCounter);
-
-        //Debug.Log("Has dashed " + dashing);
-
-        //Debug.Log("Use gravity " + useGravity);
-
-        //Debug.Log("Velocity " + rb.linearVelocity);
-
     }
 
     private void ApplyGravity()
@@ -174,14 +155,12 @@ public class PlayerMovement : MonoBehaviour
 
         if (context.started)
         {
-            //Debug.Log("Move started (Move input action)");
             moveDragTime = 1.0f;
             moving = true;
         }
 
         else if (context.canceled)
         {
-            //Debug.Log("Move ended (Move input action");
             moving = false;
         }
     }
@@ -191,7 +170,6 @@ public class PlayerMovement : MonoBehaviour
         // Only apply if both dash sequences are not taking place
         if (!dashing && !carryDashMomentum)
         {
-            Debug.Log("Can move");
             if (moving)
             {
                 moveDirection = moveOrientation.forward * moveAction.y + moveOrientation.right * moveAction.x;
@@ -233,10 +211,6 @@ public class PlayerMovement : MonoBehaviour
 
                 //Debug.Log("Drag movement");
             }
-
-            //Debug.Log("Forward drag time " + moveDragTime);
-
-            //Debug.Log("Move Direction: " + moveAction.y);
         }
     }
 
@@ -262,10 +236,6 @@ public class PlayerMovement : MonoBehaviour
 
         // Set gravity factor to 0 to avoid gravity absorbing jump velocity if jump was performed while falling
         gravityFactor = 0.0f;
-
-        //Debug.Log("Last hor move (jump d)");
-        //Debug.Log("Jump air drag time (jump d)" + moveDragTime);
-        //Debug.Log("Grounded (jump d)" + isGrounded);
     }
 
     private void HandleJumpCondition()
@@ -312,11 +282,6 @@ public class PlayerMovement : MonoBehaviour
                 jumpedOffGround = true;
             }
         }
-
-        //Debug.Log("Has jumped" + hasJumped);
-        //Debug.Log("Was grounded " + wasGrounded);
-        //Debug.Log("Coyote time counter " + coyoteTimeCounter);
-        //Debug.Log("Jump buffer counter " + jumpBufferCounter);
 
         jumpBufferCounter -= Time.fixedDeltaTime;
         jumpBufferCounter = Mathf.Max(jumpBufferCounter, min);
@@ -374,7 +339,6 @@ public class PlayerMovement : MonoBehaviour
         dashVelocity.x = dashMoveDirection.x * currentHorDashForce;
         dashVelocity.y = dashMoveDirection.y * currentVertDashForce;
         dashVelocity.z = dashMoveDirection.z * currentHorDashForce;
-        //dashVelocity = dashMoveDirection.normalized * currentHorDashForce;
 
         // Check which move input player made when performing dash to get the relative dash direction
         lastDashInput = moveAction;
@@ -388,12 +352,6 @@ public class PlayerMovement : MonoBehaviour
 
         // Set initial dash velocity
         rb.linearVelocity = dashVelocity;
-
-        //Debug.Log(currentVertDashForce + "Current dash force");
-        //Debug.Log("Dashing");
-        //Debug.Log("Dash Velocity" + rb.linearVelocity);
-        //Debug.Log("Dash velocity magnitude" + rb.linearVelocity.magnitude);
-        //Debug.Log("Dash velocity normalized" + dashMoveDirection.normalized * currentHorDashForce);
     }
 
     private void HandleDashCondition()
@@ -415,13 +373,7 @@ public class PlayerMovement : MonoBehaviour
             rb.linearVelocity = dashVelocity;
 
             completeDash = false;
-
-            //Debug.Log("Dash Velocity" + rb.linearVelocity);
-
-            //dashAllowed = false;
         }
-
-        //Debug.Log("Dashing" + dashing);
 
         Vector3 difference = lastVelocity - rb.linearVelocity;
         lastVelocity = rb.linearVelocity;
@@ -483,12 +435,7 @@ public class PlayerMovement : MonoBehaviour
                     // Dash interpolate time set to 0 
                     dashInterpolateTime = 0.0f;
                 }
-
-                //Debug.Log("Smooth momentum");
-                //Debug.Log("Last velocity " + dashMoveDirection.normalized * currentHorDashForce);
             }
-
-            //Debug.Log("Finish dash " + resetDash);
         }
 
         // If dash interpolate time is less than 1
@@ -499,15 +446,6 @@ public class PlayerMovement : MonoBehaviour
         }
 
         dashAllowed = AllowedDash();
-
-        //Debug.Log("Dash allowed " + dashAllowed);
-
-        //Debug.Log("Difference " + difference);
-
-        //Debug.Log("Jump cancel " + jumpCancelDash);
-
-        //Debug.Log("Previous hor velocity - current " + difference.x + difference.z);
-        //Debug.Log("Previous vert velocity - current " + difference.y);
     }
 
     private void HandleDashMomentum()
@@ -559,15 +497,6 @@ public class PlayerMovement : MonoBehaviour
 
             rb.linearVelocity = dashCarryOverVelocity + walkVelocity;
         }
-
-        //Debug.Log("Dash interploate time " + dashInterpolateTime);
-
-        //Debug.Log("Momentum velocity " + dashCarryOverVelocity);
-
-        //Debug.Log("Carry dash momentum " + carryDashMomentum);
-
-        //Debug.Log("Dash smooth counter " + dashSmoothCounter);
-        
     }
 
     private bool AllowedDash() 
@@ -604,13 +533,11 @@ public class PlayerMovement : MonoBehaviour
 
         if (isGrounded)
         {
-            //Debug.Log("Grounded");
             return true;
         }
 
         else
         {
-            //Debug.Log("Not Grounded");
             return false;
         }
     }
@@ -618,7 +545,6 @@ public class PlayerMovement : MonoBehaviour
 
     private void OnDrawGizmos()
     {
-        // Gizmos.DrawSphere(groundCheck.position, groundDistance);
         Gizmos.DrawRay(new Vector3(groundCheck.position.x,groundCheck.position.y + groundDistance, groundCheck.position.z), Vector3.down);
         // Check direction dash should be facing
         Gizmos.DrawRay(new Vector3(groundCheck.position.x, groundCheck.position.y + groundDistance, groundCheck.position.z), dashMomentumDirection);
