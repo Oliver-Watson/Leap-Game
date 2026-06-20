@@ -257,7 +257,6 @@ public class PlayerMovement : MonoBehaviour
         }
         else if (!isGrounded)
         {
-            // Countdown before player loses jump starts
             coyoteTimeCounter -= Time.fixedDeltaTime;
             coyoteTimeCounter = Mathf.Max(coyoteTimeCounter, min);
             jumpCancelDash = false;
@@ -376,7 +375,7 @@ public class PlayerMovement : MonoBehaviour
         lastVelocity = rb.linearVelocity;
         lastHorDashForce = currentHorDashForce;
 
-        // Prevents dash instantly being cancelled if the player was stationary 
+        // Prevents dash instantly being cancelled if the player was not dashing last frame
         bool dashLast = dashing;
 
         if (dashLast)
@@ -464,7 +463,7 @@ public class PlayerMovement : MonoBehaviour
             dashInterpolateTime += decelDashGroundFactor * decelDashRate * Time.fixedDeltaTime;
         }
 
-        // If previously received move input at dash is going against current direction
+        // Faster decay if previously received move input at dash is going against current direction
         if (moveAction.x * lastDashInput.x == -1 || moveAction.y * lastDashInput.y == -1)
         {
             dashInterpolateTime *= (momentumCarryH + (speed * dashDecayFloat)) / momentumCarryH;
