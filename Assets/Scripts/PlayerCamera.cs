@@ -37,7 +37,5 @@ public class PlayerCamera : MonoBehaviour
         orientation.rotation = Quaternion.Euler(rotationY, rotationX, 0f);
         transform.rotation = Quaternion.Euler(rotationY, rotationX, 0f);
         moveOrientation.rotation = Quaternion.Euler(0f, rotationX, 0f); 
-
-        //Debug.Log("Mouse input: " + mouseInput.x);
     }
 }
