@@ -474,10 +474,10 @@ public class PlayerMovement : MonoBehaviour
             carryDashMomentum = false;
 
             dashCarryOverVelocity = rb.linearVelocity;
-            dashCarryOverVelocity.x = 0.0f;
-            dashCarryOverVelocity.z = 0.0f;
+            dashCarryOverVelocity.x = walkVelocity.x;
+            dashCarryOverVelocity.z = walkVelocity.z;
 
-            rb.linearVelocity = dashCarryOverVelocity + walkVelocity;
+            rb.linearVelocity = dashCarryOverVelocity;
         }
     }
 
