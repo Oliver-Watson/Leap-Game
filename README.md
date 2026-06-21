@@ -1,5 +1,7 @@
 # Overview 
-This project is a platform game made in Unity with a custom movement controller. The main aim was to create rewarding mechanics which have a learning curve in the game. The core gameplay mechanic revolves around platforms reacting only when the player falls. The game makes use of a long coyote time so that the player can intentionally fall of the platform to trigger the platform while still being able to jump back on after an extended time.
+This project is a platform game made in Unity with a custom movement controller. The main aim was to create rewarding mechanics which have a learning curve in the game. 
+
+The core gameplay mechanic revolves around platforms reacting only when the player falls. The game makes use of a long coyote time so that the player can intentionally fall of the platform, trigger its behaviour, and still recover by jumping back to safety.
 
 ## Gameplay Features
 ### Custom Jump Tuning
