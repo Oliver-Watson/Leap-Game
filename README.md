@@ -43,9 +43,9 @@ Gravity is manually applied rather than using Unitys default gravity behaviour. 
 Platforms react to player state rather than operating independently.
 
 When the player falls from a platform:
-There is an interaction between movement systems and environment systems
-Coyote-time logic triggers the state transition.
-Platforms begin moving.
+- There is an interaction between movement systems and environment systems
+- Coyote-time logic triggers the state transition.
+- Platforms begin moving.
 
 ---
 
