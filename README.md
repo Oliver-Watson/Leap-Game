@@ -53,7 +53,7 @@ When the player falls from a platform:
 ### Architecture 
 This prototype prioritised iteration on gameplay feel and movement mechanics. As a result, player movement, jumping, and dash behaviour are currently implemented within a single controller script.
 
-For a larger project, I would alter this into a more modular architecture using a Finite State Machine (FSM) to separate movement states (Grounded, Airborne, Dashing, Momentum Carry), along with dedicated movement and input components. This would improve maintainability and scalability as additional mechanics are introduced.
+For a larger project, I would alter this into a more modular architecture using a Finite State Machine to separate movement states (Grounded, Airborne, Dashing, Momentum Carry), along with dedicated movement and input components. This would improve maintainability and scalability as additional mechanics are introduced.
 
 ### Gameplay
 I would like to further explore the concept of platform states being triggered by coyote time, such as the platforms only reveiling themselves when the player falls off the initial platform. 
