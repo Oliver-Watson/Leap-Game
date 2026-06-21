@@ -1,5 +1,5 @@
 # Overview 
-This project is a platform game made in Unity with a custom movement controller. The main aim was to create rewarding mechanics which have a learning curve in the game. The core gameplay mechanic revolves around platfforms reacting only when the player falls. The game makes use of a long coyote time so that the player can fall of the platform to trigger the platform while stil being able to jump back on after an extended time.
+This project is a platform game made in Unity with a custom movement controller. The main aim was to create rewarding mechanics which have a learning curve in the game. The core gameplay mechanic revolves around platforms reacting only when the player falls. The game makes use of a long coyote time so that the player can fall of the platform to trigger the platform while stil being able to jump back on after an extended time.
 
 ## Gameplay Features
 ### Custom Jump Tuning
@@ -29,11 +29,10 @@ Prevents missed jumps due to timing precision.
 The dash system applies an initial velocity and gradually decays that velocity over time.
 
 Momentum is preserved after dash completion and dash cancellation through jumping. This creates a new element to the game as players can jump cancel early or jump cancel into ramps to make longer leaps. 
-The player regains directional control when dash has ended and momentum is being carried.
-Faster decay when the player actively moves against momentum.
+The player regains directional control when dash has ended and momentum is being carried. For instance there is a faster decay when the player actively moves against momentum.
 
 ### Direct Velocity Control
-The controller directly manipulates velocity rather than relying on AddForce(). This was implemented to achieve deterministic movement behaviour and precise control over mechanics such as dash momentum, coyote time, jump buffering, and custom gravity. By expressing movement in terms of desired velocity rather than accumulated forces, the core movement logic is also less dependent on Unity's physics simulation and could be adapted more easily to a custom character controller in future.
+The controller directly manipulates velocity rather than relying on AddForce(). This was implemented to achieve more deterministic movement behaviour and precise control over mechanics such as dash momentum, coyote time, jump buffering, and custom gravity. By expressing movement in terms of desired velocity rather than accumulated forces, the core movement logic is also less dependent on Unity's physics simulation and could be adapted more easily to a custom character controller in future.
 
 ### Custom Gravity
 Gravity is manually applied rather than using Unitys default gravity behaviour. This gave me better interaction with dash mechanics, a greater control over jump feel, adjustable fall speed limits and more consistent behaviour across movement states.
@@ -42,10 +41,11 @@ Gravity is manually applied rather than using Unitys default gravity behaviour. 
 Platforms react to player state rather than operating independently.
 
 When the player falls from a platform:
-
+There is an interaction between movement systems and environment systems
 Coyote-time logic triggers the state transition.
 Platforms begin moving.
-There is an interaction between movement systems and environment systems
+
+---
 
 ## Future Improvements
 ### Architecture 
@@ -54,7 +54,4 @@ This prototype prioritised iteration on gameplay feel and movement mechanics. As
 For a larger project, I would alter this into a more modular architecture using a Finite State Machine (FSM) to separate movement states (Grounded, Airborne, Dashing, Momentum Carry), along with dedicated movement and input components. This would improve maintainability and scalability as additional mechanics are introduced.
 
 ### Gameplay
-Additional levels and challenges.
-More environmental interactions.
-Expanded movement abilities.
-Improved visual and audio feedback.
+I would like to further explore the concept of platform states being triggered by coyote time, such as the platforms only reveiling themselves when the player falls off the initial platform. 
