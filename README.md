@@ -8,7 +8,6 @@ The core gameplay mechanic revolves around platforms reacting only when the play
 Gameplay Video: https://www.youtube.com/watch?v=yTCS86AahQM
 
 ## Gameplay Features
-### Custom Jump Tuning
 
 ### Dash System
 - Multi-directional dash
