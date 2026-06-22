@@ -5,6 +5,8 @@ The core gameplay mechanic revolves around platforms reacting only when the play
 
 ![Leap-Game](./Leap-Game-Gif2.gif)
 
+Gameplay Video: https://www.youtube.com/watch?v=yTCS86AahQM
+
 ## Gameplay Features
 ### Custom Jump Tuning
 
