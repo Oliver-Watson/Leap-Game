@@ -53,9 +53,9 @@ Gravity is manually applied rather than using Unitys default gravity behaviour. 
 Platforms react to player state rather than operating independently.
 
 When the player falls from a platform:
-- There is an interaction between movement systems and environment systems
-- Coyote-time logic triggers the state transition.
-- Platforms begin moving.
+- Coyote-time logic triggers a platform state transition
+- Platforms begin moving toward the player
+- Platform behaviour is driven by player movement state rather than independent timers
 
 ---
 
@@ -67,3 +67,7 @@ For a larger project, I would alter this into a more modular architecture using 
 
 ### Gameplay
 I would like to further explore the concept of platform states being triggered by coyote time, such as the platforms only reveiling themselves when the player falls off the initial platform. 
+
+## Assets
+
+- Environment assets: BOKI - Low Poly Nature by BOKI, link: https://assetstore.unity.com/packages/3d/environments/boki-low-poly-nature-206385
