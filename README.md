@@ -4,7 +4,7 @@ This project is a platform game made in Unity with a custom movement controller.
 ![Leap-Game](./Leap-Game-Gif2.gif)
 
 Gameplay Video: 
-https://www.youtube.com/watch?v=yTCS86AahQM
+https://www.youtube.com/watch?v=GPJVpD7bNc0
 
 ## Controls
 
